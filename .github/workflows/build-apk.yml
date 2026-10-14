@@ -146,4 +146,3 @@ jobs:
       - name: Remove the key from the runner
         if: always()
         run: rm -f release.jks keystore.properties
-```
