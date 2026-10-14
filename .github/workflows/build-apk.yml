@@ -1,36 +1,149 @@
-name: Unpack project zip
+name: Build XCSABER APK
 
-# One-time helper for phones: upload xcsaber.zip to the repository root, then run this.
-# It unzips the project into the repository and commits it.
+# Run it by hand: Actions tab -> "Build XCSABER APK" -> Run workflow.
+# It also runs on every push and pull request.
 on:
   workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  unpack:
+  build:
+    name: Test and build debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Installs Gradle itself, so this works even if gradlew lost its "executable"
+      # flag when the files were uploaded from a phone.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Make sure the Android SDK pieces are present
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;34.0.0" > /dev/null || true
+
+      - name: Run unit tests
+        run: gradle --no-daemon --stacktrace testDebugUnitTest
+
+      - name: Build debug APK
+        run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Check that the APK really exists
+        run: |
+          apk=$(ls app/build/outputs/apk/debug/*.apk | head -n 1)
+          test -s "$apk" || { echo "::error::No APK was produced"; exit 1; }
+          echo "Built: $apk"
+          ls -l "$apk"
+          sha256sum "$apk"
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: XCSABER-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  release:
+    name: Signed release APK (only if signing secrets exist)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    # Only on manual runs, so ordinary pushes never need your secrets.
+    if: github.event_name == 'workflow_dispatch'
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    steps:
+      - name: Look for signing secrets
+        id: check
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Signing secrets are not set, so no release APK was built. See SIGNING.md."
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.have == 'true'
 
-      - name: Unzip into the repository
-        run: |
-          test -f xcsaber.zip || { echo "::error::Upload xcsaber.zip to the top level of the repository first"; exit 1; }
-          rm -rf _unz && mkdir _unz
-          unzip -q xcsaber.zip -d _unz
-          top=$(ls _unz | head -n 1)
-          test -d "_unz/$top/app" || { echo "::error::The zip does not look like the XCSABER project"; exit 1; }
-          # GitHub does not let a workflow overwrite workflow files, so those are skipped.
-          rm -rf "_unz/$top/.github"
-          cp -a "_unz/$top/." .
-          rm -rf _unz xcsaber.zip
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.have == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
 
-      - name: Commit
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.have == 'true'
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Restore the signing key
+        if: steps.check.outputs.have == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Add XCSABER project files"
-          git push
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
+          {
+            echo "storeFile=release.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+
+      - name: Build signed release APK
+        if: steps.check.outputs.have == 'true'
+        run: gradle --no-daemon --stacktrace assembleRelease
+
+      - name: Verify the signature
+        if: steps.check.outputs.have == 'true'
+        run: |
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          test -s "$apk" || { echo "::error::No release APK was produced"; exit 1; }
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --print-certs "$apk"
+          sha256sum "$apk"
+
+      - name: Upload the signed APK
+        if: steps.check.outputs.have == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: XCSABER-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove the key from the runner
+        if: always()
+        run: rm -f release.jks keystore.properties
 ```
