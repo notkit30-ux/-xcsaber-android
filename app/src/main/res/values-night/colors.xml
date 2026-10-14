@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="xc_blue">#7AA7FF</color>
+    <color name="xc_blue_dark">#5B8DEF</color>
+    <color name="xc_blue_light">#1E2F57</color>
+    <color name="xc_surface">#121316</color>
+    <color name="xc_on_surface">#E8EAED</color>
+    <color name="xc_surface_variant">#1E2025</color>
+    <color name="xc_outline">#3A3E46</color>
+    <color name="xc_muted">#A0A6B1</color>
+    <color name="xc_error">#F28B82</color>
+    <color name="xc_ok">#81C995</color>
+</resources>

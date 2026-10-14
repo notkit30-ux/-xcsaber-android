@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain HTTP is allowed so ordinary websites can be opened, but the app's
+     own requests (suggestions etc.) use HTTPS only. Users can turn on
+     "HTTPS-only mode" in Privacy settings to block plain HTTP pages. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

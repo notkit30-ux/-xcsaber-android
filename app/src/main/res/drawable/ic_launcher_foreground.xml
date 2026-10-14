@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original XCSABER mark: a search lens containing an "X", with a glowing saber-style handle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- lens ring -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:pathData="M48,48m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" />
+    <!-- X inside the lens -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:pathData="M41,41L55,55M55,41L41,55" />
+    <!-- saber handle: cyan blade with white core -->
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:pathData="M62,62L80,80" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M62,62L80,80" />
+</vector>

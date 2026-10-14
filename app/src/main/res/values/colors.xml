@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="xc_blue">#1F6FEB</color>
+    <color name="xc_blue_dark">#1558BF</color>
+    <color name="xc_blue_light">#D6E4FF</color>
+    <color name="xc_cyan">#38BDF8</color>
+    <color name="xc_surface">#FFFFFF</color>
+    <color name="xc_on_surface">#1C1E21</color>
+    <color name="xc_surface_variant">#F1F3F6</color>
+    <color name="xc_outline">#D0D5DD</color>
+    <color name="xc_muted">#5F6672</color>
+    <color name="xc_private_bar">#2B2D42</color>
+    <color name="xc_error">#C62828</color>
+    <color name="xc_ok">#1E8E3E</color>
+    <color name="ic_launcher_background">#1F6FEB</color>
+</resources>

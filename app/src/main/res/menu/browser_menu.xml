@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_new_tab" android:title="@string/menu_new_tab" />
+    <item android:id="@+id/menu_new_private_tab" android:title="@string/menu_new_private_tab" />
+    <item android:id="@+id/menu_find" android:title="@string/menu_find" />
+    <item
+        android:id="@+id/menu_desktop"
+        android:checkable="true"
+        android:title="@string/menu_desktop" />
+    <item android:id="@+id/menu_share" android:title="@string/menu_share" />
+    <item android:id="@+id/menu_add_shortcut" android:title="@string/menu_add_shortcut" />
+    <item android:id="@+id/menu_directions" android:title="@string/menu_directions" />
+    <item android:id="@+id/menu_open_maps" android:title="@string/menu_open_maps" />
+    <item android:id="@+id/menu_bookmarks" android:title="@string/bookmarks" />
+    <item android:id="@+id/menu_history" android:title="@string/history" />
+    <item android:id="@+id/menu_downloads" android:title="@string/downloads" />
+    <item android:id="@+id/menu_close_tab" android:title="@string/menu_close_tab" />
+</menu>
