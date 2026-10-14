@@ -15,4 +15,7 @@
     <item android:id="@+id/menu_history" android:title="@string/history" />
     <item android:id="@+id/menu_downloads" android:title="@string/downloads" />
     <item android:id="@+id/menu_close_tab" android:title="@string/menu_close_tab" />
+    <item
+        android:id="@+id/menu_ad_blocker"
+    android:title="Ad blocker &amp; privacy" />
 </menu>
