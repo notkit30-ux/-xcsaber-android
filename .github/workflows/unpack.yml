@@ -33,4 +33,3 @@ jobs:
           git add -A
           git commit -m "Add XCSABER project files"
           git push
-```
