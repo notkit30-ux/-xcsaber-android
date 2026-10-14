@@ -1,7 +1,5 @@
 name: Unpack project zip
 
-# One-time helper for phones: upload xcsaber.zip to the repository root, then run this.
-# It unzips the project into the repository and commits it.
 on:
   workflow_dispatch:
 
@@ -16,20 +14,24 @@ jobs:
 
       - name: Unzip into the repository
         run: |
-          test -f xcsaber.zip || { echo "::error::Upload xcsaber.zip to the top level of the repository first"; exit 1; }
-          rm -rf _unz && mkdir _unz
-          unzip -q xcsaber.zip -d _unz
-          top=$(ls _unz | head -n 1)
-          test -d "_unz/$top/app" || { echo "::error::The zip does not look like the XCSABER project"; exit 1; }
-          # GitHub does not let a workflow overwrite workflow files, so those are skipped.
-          rm -rf "_unz/$top/.github"
-          cp -a "_unz/$top/." .
-          rm -rf _unz xcsaber.zip
+          zip=""
+          for p in xcsaber.zip .github/workflows/xcsaber.zip; do
+            if [ -f "$p" ]; then zip="$p"; break; fi
+          done
+          test -n "$zip" || { echo "::error::xcsaber.zip not found in the repository"; exit 1; }
+          echo "Using $zip"
+          rm -rf /tmp/unz && mkdir /tmp/unz
+          unzip -q "$zip" -d /tmp/unz
+          top=$(ls /tmp/unz | head -n 1)
+          test -d "/tmp/unz/$top/app" || { echo "::error::The zip does not look like the XCSABER project"; exit 1; }
+          rm -rf "/tmp/unz/$top/.github"
+          cp -a "/tmp/unz/$top/." .
+          rm -f xcsaber.zip
 
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Add XCSABER project files"
+          git commit -m "Add XCSABER project files" || { echo "Nothing to commit"; exit 1; }
           git push
