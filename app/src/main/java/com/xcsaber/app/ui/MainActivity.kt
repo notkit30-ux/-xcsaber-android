@@ -1572,7 +1572,7 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
             .show()
     }
 
-    private fun showBookmarks() {
+    override fun showBookmarks() {
         ListDialog.show(
             activity = this,
             title = getString(R.string.bookmarks),
@@ -1588,7 +1588,7 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
         )
     }
 
-    private fun showHistory() {
+    override fun showHistory() {
         ListDialog.show(
             activity = this,
             title = getString(R.string.history),
@@ -1604,7 +1604,7 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
         )
     }
 
-    private fun showDownloads() {
+    override fun showDownloads() {
         ListDialog.show(
             activity = this,
             title = getString(R.string.downloads),
@@ -1626,7 +1626,7 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
         )
     }
 
-    private fun showSitePermissions() {
+    override fun showSitePermissions() {
         ListDialog.show(
             activity = this,
             title = getString(R.string.site_permissions),
