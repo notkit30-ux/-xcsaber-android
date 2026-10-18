@@ -30,6 +30,11 @@ class XcChromeClient(
         }
     }
 
+    override fun onReceivedIcon(view: WebView, icon: Bitmap?) {
+        tab.favicon = icon
+        host.onFavicon(tab)
+    }
+
     override fun onShowCustomView(view: View, callback: WebChromeClient.CustomViewCallback) = host.showCustomView(view, callback)
 
     override fun onHideCustomView() = host.hideCustomView()

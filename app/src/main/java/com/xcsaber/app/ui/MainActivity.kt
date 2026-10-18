@@ -8,6 +8,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -18,6 +19,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.print.PrintAttributes
+import android.print.PrintManager
 import android.speech.RecognizerIntent
 import android.text.Editable
 import android.text.TextWatcher
@@ -34,7 +37,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
@@ -44,6 +47,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -53,10 +57,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
+import com.xcsaber.app.BuildConfig
 import com.xcsaber.app.R
 import com.xcsaber.app.XcApp
 import com.xcsaber.app.browser.BrowserHost
+import com.xcsaber.app.browser.ErrorKind
 import com.xcsaber.app.browser.PageError
 import com.xcsaber.app.browser.SitePermission
 import com.xcsaber.app.browser.Tab
@@ -70,7 +77,6 @@ import com.xcsaber.app.databinding.ActivityMainBinding
 import com.xcsaber.app.downloads.DownloadHelper
 import com.xcsaber.app.downloads.DownloadPolicy
 import com.xcsaber.app.privacy.PrivacyManager
-import com.xcsaber.app.privacy.TrackerListManager
 import com.xcsaber.app.search.SearchCategory
 import com.xcsaber.app.search.SearchEngine
 import com.xcsaber.app.search.SearchProvider
@@ -81,16 +87,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.DateFormat
-import java.util.Date
+import org.json.JSONTokener
 
 /**
  * The single screen of XCSABER. It owns the tab list and switches between the home screen, the
  * current tab's WebView, the tab switcher and the privacy/settings panel.
  */
-class MainActivity : AppCompatActivity(), BrowserHost {
+class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
 
-    private enum class Screen { CONTENT, TABS, PRIVACY }
+    private enum class Screen { CONTENT, TABS, PRIVACY, SETTINGS, EXTENSIONS }
 
     private lateinit var b: ActivityMainBinding
     private lateinit var xc: XcApp
@@ -109,7 +114,10 @@ class MainActivity : AppCompatActivity(), BrowserHost {
     private var programmaticText = false
     private var suppressTabEvents = false
     private var suppressNav = false
-    private var bindingPrivacy = false
+    private var panelBack: Screen? = null
+    private var privacyCenter: PrivacyCenter? = null
+    private var settingsScreen: SettingsScreen? = null
+    private var extensionsCenter: ExtensionsCenter? = null
     private var homeShownForTab = -1L
     private var suggestJob: Job? = null
     private var endPrivateRunnable: Runnable? = null
@@ -171,11 +179,12 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         setupHome()
         setupNavigation()
         setupTabsPanel()
-        setupPrivacyPanel()
+        setupHomeActions()
         setupFindBar()
         setupErrorView()
         setupBackHandling()
 
+        applyDeveloperSettings()
         if (tabs.restore(xc.secure.getString(SESSION_KEY)) == 0) tabs.newTab(isPrivate = false)
         if (savedInstanceState == null) handleIntent(intent)
         render()
@@ -199,6 +208,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
 
     override fun onStop() {
         saveSession()
+        if (::xc.isInitialized) xc.stats.flush()
         super.onStop()
     }
 
@@ -211,6 +221,14 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         tabs.tabs.toList().forEach { destroyWebView(it) }
         if (::xc.isInitialized) xc.privacy.endPrivateSession()
         super.onDestroy()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) {
+            // Free the preview bitmaps of tabs that are not on screen; they are rebuilt when needed.
+            tabs.tabs.forEach { if (it.id != tabs.currentId) it.thumbnail = null }
+        }
     }
 
     private fun saveSession() {
@@ -242,13 +260,18 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         ViewCompat.setOnApplyWindowInsetsListener(b.rootLayout) { v, insets ->
             if (fullscreenView != null) {
                 v.setPadding(0, 0, 0, 0)
+                b.bottomInsetSpacer.layoutParams.height = 0
             } else {
                 val bars = insets.getInsets(
                     WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
                 )
                 val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-                v.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
+                val keyboardUp = ime.bottom > bars.bottom
+                v.setPadding(bars.left, bars.top, bars.right, if (keyboardUp) ime.bottom else 0)
+                // The bottom bar extends under the system navigation bar; the keyboard covers it instead.
+                b.bottomInsetSpacer.layoutParams.height = if (keyboardUp) 0 else bars.bottom
             }
+            b.bottomInsetSpacer.requestLayout()
             WindowInsetsCompat.CONSUMED
         }
     }
@@ -335,7 +358,15 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         }
         b.micButton.setOnClickListener { startVoiceSearch() }
         b.securityIcon.setOnClickListener { showConnectionInfo() }
-        b.menuButton.setOnClickListener { showOverflowMenu(it) }
+        b.menuButton.setOnClickListener { showOverflowMenu() }
+        b.tabCountButton.setOnClickListener {
+            if (screen == Screen.TABS) {
+                screen = Screen.CONTENT
+                render()
+            } else {
+                openTabsPanel()
+            }
+        }
     }
 
     private fun setupCategoryTabs() {
@@ -363,6 +394,30 @@ class MainActivity : AppCompatActivity(), BrowserHost {
             xc.recents.clear()
             refreshHome()
         }
+    }
+
+    /** Home-screen search pill, chips and quick actions. */
+    private fun setupHomeActions() {
+        b.homeSearchPill.setOnClickListener { beginSearch() }
+        b.homeMicButton.setOnClickListener { startVoiceSearch() }
+        b.homeProviderChip.setOnClickListener { showProviderSheet { refreshHome() } }
+        b.homeProtectionChip.setOnClickListener { openPanel(Screen.PRIVACY) }
+        b.qaBookmarks.setOnClickListener { showBookmarks() }
+        b.qaHistory.setOnClickListener { showHistory() }
+        b.qaDownloads.setOnClickListener { showDownloads() }
+        b.qaPrivacy.setOnClickListener { openPanel(Screen.PRIVACY) }
+        b.qaSettings.setOnClickListener { openPanel(Screen.SETTINGS) }
+        listOf(b.homeSearchPill, b.qaBookmarks, b.qaHistory, b.qaDownloads, b.qaPrivacy, b.qaSettings,
+            b.homeProviderChip, b.homeProtectionChip, b.retryButton, b.newTabButton, b.newPrivateTabButton
+        ).forEach { Motion.pressable(it) }
+    }
+
+    /** Opens the real search field (the home screen only shows a lookalike pill). */
+    private fun beginSearch() {
+        suggestionsVisible = true
+        render()
+        b.searchField.requestFocus()
+        showKeyboard()
     }
 
     private fun setupNavigation() {
@@ -455,6 +510,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
                 b.searchField.clearFocus()
                 hideKeyboard()
             }
+            screen == Screen.PRIVACY || screen == Screen.SETTINGS || screen == Screen.EXTENSIONS -> closePanel()
             screen != Screen.CONTENT -> {
                 screen = Screen.CONTENT
                 render()
@@ -485,11 +541,14 @@ class MainActivity : AppCompatActivity(), BrowserHost {
     // Rendering
     // ---------------------------------------------------------------------------------------
 
+    private fun isPanel(sc: Screen) = sc == Screen.PRIVACY || sc == Screen.SETTINGS || sc == Screen.EXTENSIONS
+
     private fun render() {
         val tab = tabs.current
         val showHome = tab == null || tab.isBlank || tab.showHome
         val inContent = screen == Screen.CONTENT
         val hasError = tab?.error != null
+        if (!isPanel(screen)) panelBack = null
 
         // Make sure the current tab has a WebView when its page is about to be shown.
         if (inContent && !showHome && tab != null && tab.webView == null) {
@@ -501,30 +560,45 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         }
         syncWebContainer(tab)
 
-        b.homeScroll.visibility = vis(inContent && showHome)
+        b.homeScroll.visibility = vis(inContent && showHome && !suggestionsVisible)
         b.webContainer.visibility = vis(inContent && !showHome && !hasError)
         b.errorView.visibility = vis(inContent && !showHome && hasError)
         b.tabsPanel.visibility = vis(screen == Screen.TABS)
-        b.privacyPanel.visibility = vis(screen == Screen.PRIVACY)
+        b.panelHost.visibility = vis(isPanel(screen))
+        privacyCenter?.root?.visibility = vis(screen == Screen.PRIVACY)
+        settingsScreen?.root?.visibility = vis(screen == Screen.SETTINGS)
+        extensionsCenter?.root?.visibility = vis(screen == Screen.EXTENSIONS)
         b.suggestionList.visibility = vis(inContent && suggestionsVisible)
 
         val pageVisible = inContent && !showHome && !suggestionsVisible
+        // The address bar is only needed over a page or while searching; the home screen has its own pill.
+        b.topBar.visibility = vis(inContent && (!showHome || suggestionsVisible))
         b.navBar.visibility = vis(pageVisible)
         b.findBar.visibility = vis(findVisible && pageVisible && !hasError)
         b.pageProgress.visibility = vis(pageVisible && tab?.loading == true)
         if (tab != null) b.pageProgress.setProgressCompat(tab.progress, true)
 
         val resultsPage = tab != null && !showHome && SearchEngine.isResultsUrl(tab.url)
-        b.categoryTabs.visibility = vis(inContent && (showHome || resultsPage || suggestionsVisible))
+        b.categoryTabs.visibility = vis(inContent && (resultsPage || suggestionsVisible))
         b.privateBadge.visibility = vis(tab?.isPrivate == true)
 
         if (hasError) {
-            b.errorTitle.text = tab?.error?.title
-            b.errorMessage.text = tab?.error?.message
+            val err = tab?.error
+            b.errorTitle.text = err?.title
+            b.errorMessage.text = err?.message
+            b.errorIcon.setImageResource(
+                when (err?.kind) {
+                    ErrorKind.OFFLINE -> R.drawable.ic_wifi_off
+                    ErrorKind.NOT_FOUND -> R.drawable.ic_globe
+                    ErrorKind.SECURITY -> R.drawable.ic_lock_open
+                    else -> R.drawable.ic_alert
+                }
+            )
         }
-        if (inContent && showHome && tab != null && homeShownForTab != tab.id) {
+        if (inContent && showHome && !suggestionsVisible && tab != null && homeShownForTab != tab.id) {
             homeShownForTab = tab.id
             refreshHome()
+            Motion.enter(listOf(b.homeHero, b.homeSearchPill, b.homeChips, b.homeActions, b.homeShortcuts, b.homeRecent))
         }
         if (!(inContent && showHome)) homeShownForTab = -1L
 
@@ -535,6 +609,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         val navId = when {
             screen == Screen.TABS -> R.id.nav_tabs
             screen == Screen.PRIVACY -> R.id.nav_privacy
+            screen == Screen.SETTINGS || screen == Screen.EXTENSIONS -> R.id.nav_settings
             suggestionsVisible -> R.id.nav_search
             else -> R.id.nav_home
         }
@@ -572,9 +647,9 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         b.reloadButton.contentDescription = getString(if (loading) R.string.close else R.string.reload)
         val bookmarked = onPage && tab != null && xc.bookmarks.isBookmarked(tab.url)
         b.bookmarkButton.setImageResource(if (bookmarked) R.drawable.ic_star else R.drawable.ic_star_border)
-        val badge = b.bottomNav.getOrCreateBadge(R.id.nav_tabs)
-        badge.number = tabs.count
-        badge.isVisible = tabs.count > 0
+        b.tabCountText.text = if (tabs.count > 99) "99+" else tabs.count.toString()
+        b.tabCountButton.contentDescription = getString(R.string.cd_tab_count) + ", " + tabs.count
+        b.tabCountText.setTextColor(getColor(if (tab?.isPrivate == true) R.color.xc_violet else R.color.xc_on_surface))
     }
 
     private fun setEnabledLook(view: View, enabled: Boolean) {
@@ -602,6 +677,12 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         }
         if (b.searchField.text.toString() != text) setFieldText(text)
         b.securityIcon.setImageResource(icon)
+        val tint = when (icon) {
+            R.drawable.ic_lock -> R.color.xc_ok
+            R.drawable.ic_lock_open -> R.color.xc_warn
+            else -> R.color.xc_muted
+        }
+        ImageViewCompat.setImageTintList(b.securityIcon, ColorStateList.valueOf(getColor(tint)))
         updateClearButton()
     }
 
@@ -634,6 +715,17 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         b.recentEmpty.setText(
             if (priv) R.string.private_no_recents else R.string.no_recent_searches
         )
+        b.homeProviderChip.text = prefs.searchProvider.name
+        val on = prefs.trackerBlocking
+        b.homeProtectionChip.text = if (on) {
+            "Protection on · " + java.text.NumberFormat.getInstance().format(xc.stats.lifetimeCount()) + " blocked"
+        } else {
+            "Protection off"
+        }
+        b.homeProtectionChip.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            if (on) R.drawable.ic_shield_check else R.drawable.ic_shield_off, 0, 0, 0
+        )
+        b.homeProtectionChip.compoundDrawableTintList = ColorStateList.valueOf(getColor(if (on) R.color.xc_ok else R.color.xc_faint))
     }
 
     // ---------------------------------------------------------------------------------------
@@ -675,7 +767,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
 
     /** Loads [rawUrl] in [tab] after applying HTTPS-only mode. Only called with validated web URLs. */
     private fun loadInTab(tab: Tab, rawUrl: String) {
-        val url = if (prefs.httpsOnly) UrlUtils.upgradeToHttps(rawUrl) else rawUrl
+        val url = if (prefs.effectiveHttpsOnly) UrlUtils.upgradeToHttps(rawUrl) else rawUrl
         tab.error = null
         tab.showHome = false
         tab.needsLoad = false
@@ -685,7 +777,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         screen = Screen.CONTENT
         hideFindBar()
         val wv = ensureWebView(tab)
-        wv.loadUrl(url, mapOf("Sec-GPC" to "1", "DNT" to "1"))
+        if (prefs.effectiveSendGpc) wv.loadUrl(url, mapOf("Sec-GPC" to "1", "DNT" to "1")) else wv.loadUrl(url)
         if (tabs.current?.id == tab.id) {
             b.searchField.clearFocus()
             hideKeyboard()
@@ -709,9 +801,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
             R.id.nav_home -> showHomeScreen()
             R.id.nav_search -> {
                 screen = Screen.CONTENT
-                render()
-                b.searchField.requestFocus()
-                showKeyboard()
+                beginSearch()
             }
             R.id.nav_tabs -> if (screen == Screen.TABS) {
                 screen = Screen.CONTENT
@@ -723,7 +813,15 @@ class MainActivity : AppCompatActivity(), BrowserHost {
                 screen = Screen.CONTENT
                 render()
             } else {
-                openPrivacyPanel()
+                panelBack = null
+                openPanel(Screen.PRIVACY)
+            }
+            R.id.nav_settings -> if (screen == Screen.SETTINGS) {
+                screen = Screen.CONTENT
+                render()
+            } else {
+                panelBack = null
+                openPanel(Screen.SETTINGS)
             }
         }
     }
@@ -791,10 +889,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         } else {
             b.searchField.clearFocus()
             render()
-            if (focusSearch) {
-                b.searchField.requestFocus()
-                showKeyboard()
-            }
+            if (focusSearch) beginSearch()
         }
         return tab
     }
@@ -856,6 +951,8 @@ class MainActivity : AppCompatActivity(), BrowserHost {
 
     private fun createWebView(tab: Tab): WebView {
         val wv = WebView(this)
+        // New tabs follow the "request desktop sites by default" preference.
+        if (tab.isBlank && prefs.desktopModeDefault) tab.desktop = true
         // Private tabs get their own isolated WebView profile where the device supports it.
         xc.privacy.assignProfile(wv, tab.isPrivate)
         wv.layoutParams = FrameLayout.LayoutParams(
@@ -878,13 +975,11 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         if (WebViewFeature.isFeatureSupported(WebViewFeature.SAFE_BROWSING_ENABLE)) {
             WebSettingsCompat.setSafeBrowsingEnabled(s, true)
         }
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-            WebSettingsCompat.setAlgorithmicDarkeningAllowed(s, isNightMode())
-        }
+        applyPageSettingsTo(wv)
         applyDesktopMode(tab, wv)
         xc.privacy.applyCookiePolicy(wv)
 
-        wv.webViewClient = XcWebViewClient(tab, this, prefs, xc.trackers.blocker)
+        wv.webViewClient = XcWebViewClient(tab, this, prefs, xc.trackers.blocker, xc.stats)
         wv.webChromeClient = XcChromeClient(tab, this, prefs)
         wv.setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
             onDownloadRequested(tab, url, userAgent, contentDisposition, mimeType)
@@ -971,6 +1066,11 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         if (!tab.isPrivate && prefs.saveHistory) xc.history.updateTitle(tab.url, title)
     }
 
+    override fun onFavicon(tab: Tab) {
+        // Kept in memory only, and only for the tab switcher.
+        if (screen == Screen.TABS) refreshTabsPanel()
+    }
+
     override fun onError(tab: Tab, error: PageError) {
         if (isCurrent(tab)) render()
     }
@@ -983,7 +1083,8 @@ class MainActivity : AppCompatActivity(), BrowserHost {
             tab.error = PageError(
                 "This tab stopped working",
                 "Android freed up memory used by this page. Try again to reload it.",
-                tab.url
+                tab.url,
+                ErrorKind.OTHER
             )
             if (isCurrent(tab)) render()
         }
@@ -1218,6 +1319,10 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         }
         val name = downloader.guessName(url, contentDisposition, mimeType)
         val risky = DownloadPolicy.isRisky(name, mimeType)
+        if (!risky && !prefs.confirmDownloads) {
+            startDownload(tab, url, name, mimeType, userAgent)
+            return
+        }
         val message = StringBuilder()
             .append(name).append("\nFrom ").append(UrlUtils.displayHost(url))
         if (risky) {
@@ -1312,26 +1417,24 @@ class MainActivity : AppCompatActivity(), BrowserHost {
     // Overflow menu and dialogs
     // ---------------------------------------------------------------------------------------
 
-    private fun showOverflowMenu(anchor: View) {
-        val popup = PopupMenu(this, anchor)
-        popup.menuInflater.inflate(R.menu.browser_menu, popup.menu)
+    private fun showOverflowMenu() {
+        // The sheet is generated from browser_menu.xml, so the menu resource stays the single source.
+        val menu = android.widget.PopupMenu(this, b.menuButton).menu
+        menuInflater.inflate(R.menu.browser_menu, menu)
         val tab = tabs.current
         val onPage = tab != null && !tab.isBlank && !tab.showHome
         val placeQuery = currentPlaceQuery()
-        popup.menu.findItem(R.id.menu_desktop).apply {
+        menu.findItem(R.id.menu_desktop).apply {
             isChecked = tab?.desktop == true
             isEnabled = onPage
         }
-        popup.menu.findItem(R.id.menu_find).isEnabled = onPage
-        popup.menu.findItem(R.id.menu_share).isEnabled = onPage
-        popup.menu.findItem(R.id.menu_add_shortcut).isEnabled = onPage
-        popup.menu.findItem(R.id.menu_directions).isEnabled = placeQuery.isNotBlank()
-        popup.menu.findItem(R.id.menu_open_maps).isEnabled = placeQuery.isNotBlank()
-        popup.setOnMenuItemClickListener { item ->
-            onMenuItem(item.itemId)
-            true
-        }
-        popup.show()
+        menu.findItem(R.id.menu_find).isEnabled = onPage
+        menu.findItem(R.id.menu_share).isEnabled = onPage
+        menu.findItem(R.id.menu_add_shortcut).isEnabled = onPage
+        menu.findItem(R.id.menu_directions).isEnabled = placeQuery.isNotBlank()
+        menu.findItem(R.id.menu_open_maps).isEnabled = placeQuery.isNotBlank()
+        menu.findItem(R.id.menu_close_tab).isEnabled = tab != null
+        Sheets.menu(this, Sheets.entriesOf(menu)) { id -> onMenuItem(id) }
     }
 
     private fun currentPlaceQuery(): String {
@@ -1379,6 +1482,9 @@ class MainActivity : AppCompatActivity(), BrowserHost {
             R.id.menu_history -> showHistory()
             R.id.menu_downloads -> showDownloads()
             R.id.menu_close_tab -> if (tab != null) closeTabNow(tab)
+            R.id.menu_ad_blocker -> openPanel(Screen.PRIVACY)
+            R.id.menu_extensions -> openPanel(Screen.EXTENSIONS)
+            R.id.menu_settings -> openPanel(Screen.SETTINGS)
         }
     }
 
@@ -1401,6 +1507,10 @@ class MainActivity : AppCompatActivity(), BrowserHost {
 
     private fun showConnectionInfo() {
         val tab = tabs.current
+        val blocked = tab?.blockedCount?.get() ?: 0
+        val blockedLine = if (tab != null && !tab.isBlank && !tab.showHome) {
+            "\n\n" + (if (prefs.trackerBlocking) "$blocked ad or tracker requests blocked on this page." else "Ad and tracker blocking is off.")
+        } else ""
         val message = when {
             tab == null || tab.isBlank || tab.showHome -> "XCSABER home. Nothing is loaded."
             UrlUtils.isHttps(tab.url) ->
@@ -1410,7 +1520,7 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         }
         MaterialAlertDialogBuilder(this)
             .setTitle("Connection")
-            .setMessage(message)
+            .setMessage(message + blockedLine)
             .setPositiveButton(android.R.string.ok, null)
             .show()
     }
@@ -1541,71 +1651,199 @@ class MainActivity : AppCompatActivity(), BrowserHost {
     }
 
     // ---------------------------------------------------------------------------------------
-    // Privacy and settings panel
+    // Panels: Privacy Center, Extensions & Plugins, Settings
     // ---------------------------------------------------------------------------------------
 
-    private fun setupPrivacyPanel() {
-        b.trackerSwitch.setOnCheckedChangeListener { _, on -> if (!bindingPrivacy) prefs.trackerBlocking = on }
-        b.cookieSwitch.setOnCheckedChangeListener { _, on ->
-            if (bindingPrivacy) return@setOnCheckedChangeListener
-            prefs.blockThirdPartyCookies = on
-            tabs.tabs.forEach { t -> t.webView?.let { xc.privacy.applyCookiePolicy(it) } }
+    private fun ensurePanel(target: Screen) {
+        when (target) {
+            Screen.PRIVACY -> if (privacyCenter == null) privacyCenter = PrivacyCenter(this, xc, this, b.panelHost)
+            Screen.SETTINGS -> if (settingsScreen == null) settingsScreen = SettingsScreen(this, xc, this, b.panelHost)
+            Screen.EXTENSIONS -> if (extensionsCenter == null) extensionsCenter = ExtensionsCenter(this, xc, this, b.panelHost)
+            else -> {}
         }
-        b.httpsSwitch.setOnCheckedChangeListener { _, on -> if (!bindingPrivacy) prefs.httpsOnly = on }
-        b.popupSwitch.setOnCheckedChangeListener { _, on ->
-            if (bindingPrivacy) return@setOnCheckedChangeListener
-            prefs.blockPopups = on
-            tabs.tabs.forEach { t -> t.webView?.settings?.javaScriptCanOpenWindowsAutomatically = !on }
-        }
-        b.suggestSwitch.setOnCheckedChangeListener { _, on -> if (!bindingPrivacy) prefs.searchSuggestions = on }
-        b.historySwitch.setOnCheckedChangeListener { _, on ->
-            if (bindingPrivacy) return@setOnCheckedChangeListener
-            prefs.saveHistory = on
-            prefs.saveRecentSearches = on
-        }
-        b.updateTrackersButton.setOnClickListener { updateTrackerList() }
-        b.clearDataButton.setOnClickListener { showClearDataDialog() }
-        b.endPrivateButton.setOnClickListener { endPrivateSessionNow() }
-        b.providerButton.setOnClickListener { showProviderDialog() }
-        b.themeButton.setOnClickListener { showThemeDialog() }
-        b.bookmarksButton.setOnClickListener { showBookmarks() }
-        b.historyButton.setOnClickListener { showHistory() }
-        b.downloadsButton.setOnClickListener { showDownloads() }
-        b.siteSettingsButton.setOnClickListener { showSitePermissions() }
     }
 
-    private fun openPrivacyPanel() {
+    private fun refreshPanel(target: Screen) {
+        when (target) {
+            Screen.PRIVACY -> privacyCenter?.refresh()
+            Screen.SETTINGS -> settingsScreen?.refresh()
+            Screen.EXTENSIONS -> extensionsCenter?.refresh()
+            else -> {}
+        }
+    }
+
+    private fun openPanel(target: Screen) {
+        if (screen == target) return
         b.searchField.clearFocus()
         hideKeyboard()
-        refreshPrivacyPanel()
-        screen = Screen.PRIVACY
+        suggestionsVisible = false
+        // Remember the panel we came from so Back returns to it.
+        panelBack = if (isPanel(screen)) screen else null
+        ensurePanel(target)
+        refreshPanel(target)
+        screen = target
         render()
     }
 
-    private fun refreshPrivacyPanel() {
-        bindingPrivacy = true
-        b.trackerSwitch.isChecked = prefs.trackerBlocking
-        b.cookieSwitch.isChecked = prefs.blockThirdPartyCookies
-        b.httpsSwitch.isChecked = prefs.httpsOnly
-        b.popupSwitch.isChecked = prefs.blockPopups
-        b.suggestSwitch.isChecked = prefs.searchSuggestions
-        b.historySwitch.isChecked = prefs.saveHistory
-        bindingPrivacy = false
+    override fun closePanel() {
+        val back = panelBack
+        panelBack = null
+        screen = back ?: Screen.CONTENT
+        if (back != null) refreshPanel(back)
+        render()
+    }
 
-        val source = if (prefs.trackerListUpdatedAt > 0) {
-            "updated " + DateFormat.getDateInstance().format(Date(prefs.trackerListUpdatedAt))
-        } else {
-            "small built-in starter list; tap Update for the full maintained list"
+    override fun openSettingsPanel() = openPanel(Screen.SETTINGS)
+
+    override fun openExtensionsPanel() = openPanel(Screen.EXTENSIONS)
+
+    override fun blockedOnCurrentPage(): Int = tabs.current?.blockedCount?.get() ?: 0
+
+    override fun hasPrivateTabs(): Boolean = tabs.hasPrivateTabs()
+
+    // ---- PluginHost ----
+
+    override fun openPrivacyCenter() = openPanel(Screen.PRIVACY)
+
+    override fun updateBlocklist() {
+        ensurePanel(Screen.PRIVACY)
+        privacyCenter?.updateList()
+        if (screen != Screen.PRIVACY) toast("Updating the blocklist…")
+    }
+
+    override fun reloadCurrentPage() {
+        tabs.current?.webView?.reload()
+    }
+
+    override fun message(text: String) = toast(text)
+
+    override fun pluginsChanged() {
+        extensionsCenter?.refresh()
+        privacyCenter?.refreshStats()
+        if (homeShownForTab != -1L) refreshHome()
+    }
+
+    /** Re-applies every setting that lives on the WebView to all open tabs. */
+    override fun applyPageSettings() {
+        tabs.tabs.forEach { t ->
+            t.webView?.let {
+                applyPageSettingsTo(it)
+                xc.privacy.applyCookiePolicy(it)
+                it.settings.javaScriptCanOpenWindowsAutomatically = !prefs.blockPopups
+            }
         }
-        val onPage = tabs.current?.blockedCount?.get() ?: 0
-        b.trackerInfo.text = "${xc.trackers.blocker.size} domains on the block list ($source). $onPage blocked on this page."
-        b.privateNote.text = if (xc.privacy.privateProfilesSupported) {
-            "Private tabs use their own isolated WebView profile (separate cookies, storage and cache). It is deleted when the last private tab closes."
-        } else {
-            "This device's WebView can't isolate private cookies. Private tabs still skip history and recent searches; use Clear browsing data to remove cookies."
+    }
+
+    private fun applyPageSettingsTo(wv: WebView) {
+        val s = wv.settings
+        val tools = prefs.pageToolsEnabled
+        s.textZoom = if (tools) prefs.pageTextZoom else 100
+        s.blockNetworkImage = tools && prefs.blockImages
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+            // Only meaningful while the app theme is dark; WebView ignores it otherwise.
+            WebSettingsCompat.setAlgorithmicDarkeningAllowed(s, isNightMode() && (!tools || prefs.pageDarkening))
         }
-        b.providerButton.text = "Search provider: " + prefs.searchProvider.name
-        b.themeButton.text = "Theme: " + themeLabel(prefs.theme)
+    }
+
+    override fun printCurrentPage() {
+        val tab = tabs.current
+        val wv = tab?.webView
+        if (tab == null || tab.isBlank || tab.showHome || wv == null) {
+            toast("Open a page first")
+            return
+        }
+        val name = (tab.displayTitle().ifBlank { "XCSABER page" }).take(40)
+        try {
+            val pm = getSystemService(Context.PRINT_SERVICE) as PrintManager
+            pm.print(name, wv.createPrintDocumentAdapter(name), PrintAttributes.Builder().build())
+        } catch (e: Exception) {
+            toast("Couldn't start printing")
+        }
+    }
+
+    override fun viewSourceOfCurrentPage() {
+        val tab = tabs.current
+        val wv = tab?.webView
+        if (tab == null || tab.isBlank || tab.showHome || wv == null) {
+            toast("Open a page first")
+            return
+        }
+        wv.evaluateJavascript("(function(){return document.documentElement.outerHTML;})()") { raw ->
+            val html = try {
+                JSONTokener(raw).nextValue() as? String ?: ""
+            } catch (e: Exception) {
+                ""
+            }
+            showTextDialog("Page source", if (html.length > MAX_SOURCE_CHARS) html.take(MAX_SOURCE_CHARS) + "\n… (truncated)" else html, mono = true)
+        }
+    }
+
+    override fun showPageInfo() {
+        val tab = tabs.current
+        if (tab == null || tab.isBlank || tab.showHome) {
+            toast("Open a page first")
+            return
+        }
+        val text = StringBuilder()
+            .append("URL\n").append(tab.url)
+            .append("\n\nTitle\n").append(tab.title.ifBlank { "(none)" })
+            .append("\n\nTab\n").append(if (tab.isPrivate) "Private" else "Normal").append(if (tab.desktop) ", desktop site" else ", mobile site")
+            .append("\n\nBlocked on this page\n").append(tab.blockedCount.get())
+            .append("\n\nUser agent\n").append(tab.webView?.settings?.userAgentString ?: "")
+        showTextDialog("Page info", text.toString(), mono = false)
+    }
+
+    private fun showTextDialog(title: String, text: String, mono: Boolean) {
+        val tv = TextView(this)
+        tv.text = text
+        tv.setTextIsSelectable(true)
+        tv.textSize = if (mono) 11f else 13f
+        if (mono) tv.typeface = android.graphics.Typeface.MONOSPACE
+        tv.setTextColor(getColor(R.color.xc_on_surface))
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        tv.setPadding(pad, pad / 2, pad, pad / 2)
+        val scroll = android.widget.ScrollView(this)
+        scroll.addView(tv)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(scroll)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    override fun clearHttpCache() {
+        val existing = tabs.tabs.firstNotNullOfOrNull { it.webView }
+        val temp = if (existing == null) WebView(this) else null
+        (existing ?: temp)?.clearCache(true)
+        temp?.destroy()
+        toast("HTTP cache cleared")
+    }
+
+    override fun applyDeveloperSettings() {
+        // Remote debugging can only be on in debug builds, and only when the user turned it on.
+        val on = BuildConfig.DEBUG && prefs.devToolsEnabled && prefs.devRemoteDebugging
+        try {
+            WebView.setWebContentsDebuggingEnabled(on)
+        } catch (e: Exception) {
+            // Not supported on this WebView; nothing to do.
+        }
+    }
+
+    // ---- Choosers ----
+
+    override fun showProviderSheet(onDone: () -> Unit) {
+        val providers = SearchProvider.ALL
+        Sheets.choose(
+            activity = this,
+            title = "Search provider",
+            labels = providers.map { it.name },
+            selected = providers.indexOfFirst { it.id == prefs.searchProviderId },
+            note = "Maps use OpenStreetMap and Shopping uses Bing Shopping, whichever provider you pick."
+        ) { which ->
+            prefs.searchProviderId = providers[which].id
+            onDone()
+            toast("Search provider: " + providers[which].name)
+        }
     }
 
     private fun themeLabel(theme: String) = when (theme) {
@@ -1614,55 +1852,25 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         else -> "System default"
     }
 
-    private fun updateTrackerList() {
-        b.updateTrackersButton.isEnabled = false
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) { xc.trackers.update() }
-            b.updateTrackersButton.isEnabled = true
-            when (result) {
-                is TrackerListManager.UpdateResult.Success ->
-                    toast("Tracker list updated: ${result.count} domains")
-                is TrackerListManager.UpdateResult.Failure ->
-                    toast("Couldn't update the tracker list: ${result.reason}")
+    override fun showThemeSheet() {
+        val values = listOf(Prefs.THEME_SYSTEM, Prefs.THEME_LIGHT, Prefs.THEME_DARK)
+        Sheets.choose(
+            activity = this,
+            title = "Theme",
+            labels = values.map { themeLabel(it) },
+            selected = values.indexOf(prefs.theme).coerceAtLeast(0),
+            note = if (tabs.hasPrivateTabs()) "Changing the theme restarts the screen and closes private tabs." else null
+        ) { which ->
+            if (values[which] != prefs.theme) {
+                prefs.theme = values[which]
+                // Switching theme restarts the screen: normal tabs are restored, private tabs close.
+                saveSession()
+                XcApp.applyTheme(values[which])
             }
-            refreshPrivacyPanel()
         }
     }
 
-    private fun showProviderDialog() {
-        val providers = SearchProvider.ALL
-        val names = providers.map { it.name }.toTypedArray()
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Search provider")
-            .setSingleChoiceItems(names, providers.indexOfFirst { it.id == prefs.searchProviderId }) { dialog, which ->
-                prefs.searchProviderId = providers[which].id
-                refreshPrivacyPanel()
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-        toast("Maps use OpenStreetMap and Shopping uses Bing Shopping, whichever provider you pick.")
-    }
-
-    private fun showThemeDialog() {
-        val values = arrayOf(Prefs.THEME_SYSTEM, Prefs.THEME_LIGHT, Prefs.THEME_DARK)
-        val labels = values.map { themeLabel(it) }.toTypedArray()
-        MaterialAlertDialogBuilder(this)
-            .setTitle(if (tabs.hasPrivateTabs()) "Theme (closes private tabs)" else "Theme")
-            .setSingleChoiceItems(labels, values.indexOf(prefs.theme).coerceAtLeast(0)) { dialog, which ->
-                dialog.dismiss()
-                if (values[which] != prefs.theme) {
-                    prefs.theme = values[which]
-                    // Switching theme restarts the screen: normal tabs are restored, private tabs close.
-                    saveSession()
-                    XcApp.applyTheme(values[which])
-                }
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun showClearDataDialog() {
+    override fun showClearDataDialog() {
         val labels = arrayOf(
             "Cookies", "Cache", "Site data (local storage)", "Browsing history",
             "Recent searches", "Saved logins and form data", "Website permissions", "Download list"
@@ -1695,12 +1903,10 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         toast("Browsing data cleared")
     }
 
-    private fun endPrivateSessionNow() {
+    override fun endPrivateSessionNow() {
         val closed = tabs.closePrivateTabs()
         closed.forEach { destroyWebView(it) }
         if (tabs.count == 0) tabs.newTab(isPrivate = false)
-        screen = Screen.PRIVACY
-        refreshPrivacyPanel()
         render()
         // Give WebView a moment to release the private profile before deleting it.
         handler.postDelayed({
@@ -1727,11 +1933,19 @@ class MainActivity : AppCompatActivity(), BrowserHost {
         imm.hideSoftInputFromWindow(b.rootLayout.windowToken, 0)
     }
 
+    /** Short confirmation or error message. A Snackbar above the bottom bar, or a Toast in full screen. */
     private fun toast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        if (fullscreenView != null || isFinishing || isDestroyed) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val bar = Snackbar.make(b.rootLayout, message, Snackbar.LENGTH_SHORT)
+        if (b.bottomNav.visibility == View.VISIBLE && b.mainColumn.visibility == View.VISIBLE) bar.setAnchorView(b.bottomNav)
+        bar.show()
     }
 
     private companion object {
         const val SESSION_KEY = "session"
+        const val MAX_SOURCE_CHARS = 60_000
     }
 }

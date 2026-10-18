@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- XCSABER spacing, shape and type scale. -->
+<resources>
+    <!-- Spacing (4dp grid) -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_5">20dp</dimen>
+    <dimen name="space_6">24dp</dimen>
+    <dimen name="space_8">32dp</dimen>
+
+    <!-- Corner radii -->
+    <dimen name="radius_s">12dp</dimen>
+    <dimen name="radius_m">16dp</dimen>
+    <dimen name="radius_l">22dp</dimen>
+    <dimen name="radius_xl">28dp</dimen>
+
+    <!-- Icons and touch targets -->
+    <dimen name="icon_s">18dp</dimen>
+    <dimen name="icon_m">24dp</dimen>
+    <dimen name="icon_l">32dp</dimen>
+    <dimen name="touch_min">48dp</dimen>
+    <dimen name="tile_s">36dp</dimen>
+    <dimen name="tile_m">44dp</dimen>
+    <dimen name="tile_l">52dp</dimen>
+
+    <!-- Type scale -->
+    <dimen name="text_overline">11sp</dimen>
+    <dimen name="text_caption">12sp</dimen>
+    <dimen name="text_body_s">13sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_title">17sp</dimen>
+    <dimen name="text_headline">22sp</dimen>
+    <dimen name="text_stat">26sp</dimen>
+    <dimen name="text_display">30sp</dimen>
+</resources>

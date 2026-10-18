@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- XCSABER icon set: 24dp, 1.8dp rounded stroke. Tinted with the theme; override with app:tint. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:pathData="M19.7,14a7,7 0 0,0 .3,-2V5l-8,-3 -3.2,1.2M4.7,4.7L4,5v7c0,6 8,10 8,10a20,20 0 0,0 5.6,-4.4M2,2L22,22"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

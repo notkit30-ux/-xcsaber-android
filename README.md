@@ -2,7 +2,7 @@
 
 An Android search engine and private web browser, written in Kotlin with the real Android WebView. It is built to be compiled by **GitHub Actions**, so you can produce an APK using only an Android phone.
 
-> **Honest status.** All the logic that does not need Android itself (URL handling, search URLs, tracker blocking, tabs, history, bookmarks, downloads policy, preferences) was compiled and its 66 unit tests passed on a computer. The Android screens were reviewed line by line but **have not been compiled or run on a device yet**. The first GitHub Actions run is the real compile test. If it fails, the log shows the exact line, so send me the red error text and I will fix it. Nothing in this README claims the APK works until your own build turns green.
+> **Honest status (v1.1.0).** All the logic that does not need Android itself (URL handling, search URLs, tracker blocking, block statistics, plugin registry, settings model and search, tabs, history, bookmarks, downloads policy, preferences) was compiled and its 81 unit tests passed on a computer. The Android screens and layouts of the 1.1.0 upgrade were cross-checked by script (every resource, string, style and view-binding reference resolves, all XML parses) but **have not been compiled or run on a device yet**. The first GitHub Actions run is the real compile test. If it fails, the log shows the exact line, so send me the red error text and I will fix it.
 
 ## What it does
 
@@ -18,7 +18,10 @@ An Android search engine and private web browser, written in Kotlin with the rea
 | Tabs | Many tabs, tab switcher with page previews, private tabs, open links in a new tab or new private tab. |
 | Browser | Back, forward, reload/stop, home, share, bookmark, find in page, desktop-site mode, full-screen video, file upload, pop-up control, downloads through Android's DownloadManager. |
 | Home | Customizable shortcuts (tap **+** to add; long-press a tile to remove; long-press **+** to reset). Recent searches. |
-| Look | White and blue Material 3 design with an original logo, light/dark/system theme, splash screen. |
+| Look | Dark-first midnight design (light and system themes too) with electric-blue, cyan and violet accents, an original logo, splash screen, and a shared design system (`values/colors.xml`, `dimens.xml`, `type.xml`, `styles.xml`). Animations follow Android's "remove animations" setting. |
+| Privacy Center | Big protection switch, real blocked-request counts (this session and lifetime, normal tabs only), blocklist source, domain count and last update, an **Update list** action with progress and error states, and a plain summary of which protections are active. All of it drives the real `TrackerBlocker` used by `XcWebViewClient`. |
+| Extensions & Plugins | Native plugins: **Ad & Tracker Blocker**, **Privacy Guard** (master switch for third-party cookie blocking, HTTPS-only and Global Privacy Control), **Page Tools** (text zoom, block images, darken websites, print / save as PDF) and **Developer Tools** (debug builds only: remote debugging, page info, view source, clear cache). |
+| Settings | Categorised settings with descriptions, search, theme, search engine, privacy, downloads, and an About page with version and build info. |
 
 ## Privacy and security (what is and is not true)
 
@@ -94,14 +97,20 @@ xcsaber/
         │   │   ├── search/                   SearchProvider, SearchEngine, SuggestionClient, UrlUtils, SearchCategory
         │   │   ├── browser/                  Tab, TabManager, XcWebViewClient, XcChromeClient, BrowserHost,
         │   │   │                             SitePermissionStore, UserAgents
-        │   │   ├── privacy/                  PrivacyManager, TrackerBlocker, TrackerListManager
+        │   │   ├── privacy/                  PrivacyManager, TrackerBlocker, TrackerListManager, BlockStats
+        │   │   ├── plugins/                  BrowserPlugin, PluginRegistry, BuiltinPlugins (native plugin framework)
         │   │   ├── data/                     SecureStore, Prefs, BookmarkStore, HistoryStore,
         │   │   │                             RecentSearchStore, ShortcutStore, models
         │   │   ├── downloads/                DownloadHelper, DownloadPolicy, DownloadStore
-        │   │   └── ui/                       MainActivity, Adapters, ListDialog
+        │   │   └── ui/                       MainActivity, Adapters, ListDialog, Sheets, Motion,
+        │   │   │                             PrivacyCenter, ExtensionsCenter, SettingsScreen, SettingsAdapter, SettingItem
         │   └── res/                          layouts, themes (light/dark), icons, strings, menus
-        └── test/java/com/xcsaber/app/        66 JVM unit tests
+        └── test/java/com/xcsaber/app/        81 JVM unit tests
 ```
+
+## Plugin framework
+
+Plugins implement `BrowserPlugin` (`plugins/BrowserPlugin.kt`) and are registered in `PluginRegistry`. They are compiled into the app. **Nothing is downloaded or executed at runtime**, and Chrome/Firefox extensions are not supported, because Android WebView cannot load them. To add a plugin: implement the interface, give it a `PluginInfo`, add it to the registry list, and add any new preference to `Prefs`.
 
 ## Tests
 
@@ -112,7 +121,9 @@ xcsaber/
 - Search results are the providers' web pages, so layout and ads are theirs. There is no custom result renderer.
 - Videos play on the website's own player (full-screen supported). `blob:` and `data:` downloads are not supported.
 - Tab previews are small in-memory snapshots of normal tabs.
-- Tracker blocking matches domains only; it does not hide page elements.
+- Tracker blocking matches domains only; it does not hide page elements, and it cannot remove all ads. Lifetime counts exclude private tabs by design.
+- Darken websites only works while the app theme is dark, and only on WebView versions that support algorithmic darkening.
+- Private-tab cookie isolation depends on the phone's WebView (see above).
 - Not built for the Play Store yet (that needs a signed `.aab`, see SIGNING.md).
 
 ## If the build fails

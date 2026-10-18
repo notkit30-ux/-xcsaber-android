@@ -3,9 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingStart="24dp"
-    android:paddingTop="8dp"
-    android:paddingEnd="24dp">
+    android:paddingStart="@dimen/space_6"
+    android:paddingTop="@dimen/space_2"
+    android:paddingEnd="@dimen/space_6">
 
     <EditText
         android:id="@+id/shortcutNameField"
@@ -15,7 +15,9 @@
         android:importantForAutofill="no"
         android:inputType="text"
         android:maxLines="1"
-        android:minHeight="48dp" />
+        android:minHeight="@dimen/touch_min"
+        android:textColor="@color/xc_on_surface"
+        android:textColorHint="@color/xc_faint" />
 
     <EditText
         android:id="@+id/shortcutUrlField"
@@ -25,5 +27,7 @@
         android:importantForAutofill="no"
         android:inputType="textUri"
         android:maxLines="1"
-        android:minHeight="48dp" />
+        android:minHeight="@dimen/touch_min"
+        android:textColor="@color/xc_on_surface"
+        android:textColorHint="@color/xc_faint" />
 </LinearLayout>

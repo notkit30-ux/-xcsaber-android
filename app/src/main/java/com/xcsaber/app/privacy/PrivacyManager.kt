@@ -54,7 +54,7 @@ class PrivacyManager(
     fun applyCookiePolicy(webView: WebView) {
         val cm = CookieManager.getInstance()
         cm.setAcceptCookie(true)
-        cm.setAcceptThirdPartyCookies(webView, !prefs.blockThirdPartyCookies)
+        cm.setAcceptThirdPartyCookies(webView, !prefs.effectiveBlockThirdPartyCookies)
     }
 
     /**

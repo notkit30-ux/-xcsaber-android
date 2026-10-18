@@ -2,10 +2,7 @@
 <!-- Full icon (background + mark) for Android 7.x devices that lack adaptive icons. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@color/ic_launcher_background" />
-            <corners android:radius="18dp" />
-        </shape>
+        <shape android:shape="rectangle"><gradient android:angle="315" android:startColor="#3A7BFF" android:endColor="#6A4BEF" /><corners android:radius="18dp" /></shape>
     </item>
     <item android:drawable="@drawable/ic_launcher_foreground" />
 </layer-list>

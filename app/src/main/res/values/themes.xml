@@ -3,25 +3,43 @@
 
     <style name="Theme.XCSABER" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/xc_blue</item>
-        <item name="colorOnPrimary">@color/xc_surface</item>
+        <item name="colorOnPrimary">@color/xc_on_accent</item>
         <item name="colorPrimaryContainer">@color/xc_blue_light</item>
         <item name="colorOnPrimaryContainer">@color/xc_on_surface</item>
         <item name="colorSecondary">@color/xc_cyan</item>
+        <item name="colorOnSecondary">@color/xc_on_accent</item>
+        <item name="colorTertiary">@color/xc_violet</item>
         <item name="colorSurface">@color/xc_surface</item>
         <item name="colorOnSurface">@color/xc_on_surface</item>
         <item name="colorSurfaceVariant">@color/xc_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/xc_muted</item>
         <item name="colorOutline">@color/xc_outline</item>
+        <item name="colorOutlineVariant">@color/xc_outline_soft</item>
         <item name="colorError">@color/xc_error</item>
-        <item name="android:colorBackground">@color/xc_surface</item>
-        <item name="android:statusBarColor">@color/xc_surface</item>
+        <item name="android:colorBackground">@color/xc_bg</item>
+        <item name="android:statusBarColor">@color/xc_bg</item>
         <item name="android:navigationBarColor">@color/xc_surface</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:textColorPrimary">@color/xc_on_surface</item>
+        <item name="android:textColorSecondary">@color/xc_muted</item>
+        <item name="colorSecondaryContainer">@color/xc_blue_light</item>
+        <item name="colorOnSecondaryContainer">@color/xc_blue</item>
+        <item name="colorSurfaceContainerLowest">@color/xc_surface</item>
+        <item name="colorSurfaceContainerLow">@color/xc_surface</item>
+        <item name="colorSurfaceContainer">@color/xc_surface_raised</item>
+        <item name="colorSurfaceContainerHigh">@color/xc_surface_raised</item>
+        <item name="colorSurfaceContainerHighest">@color/xc_surface_high</item>
+        <item name="colorSurfaceBright">@color/xc_surface_raised</item>
+        <item name="colorSurfaceDim">@color/xc_bg</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Xc.BottomSheetDialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Xc.Dialog</item>
+        <item name="snackbarStyle">@style/Widget.Xc.Snackbar</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">@bool/xc_light_bars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/xc_light_bars</item>
     </style>
 
-    <!-- Splash screen (AndroidX core-splashscreen). Shows the original XCSABER logo. -->
+    <!-- Splash screen (AndroidX core-splashscreen): the XCSABER mark on midnight. -->
     <style name="Theme.XCSABER.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenBackground">@color/xc_splash_bg</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="postSplashScreenTheme">@style/Theme.XCSABER</item>
     </style>

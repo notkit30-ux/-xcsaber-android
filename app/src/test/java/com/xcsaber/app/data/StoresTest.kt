@@ -141,7 +141,7 @@ class PrefsTest {
         assertTrue(p.blockPopups)
         assertTrue(p.saveHistory)
         assertFalse(p.httpsOnly)
-        assertEquals(Prefs.THEME_SYSTEM, p.theme)
+        assertEquals(Prefs.THEME_DARK, p.theme)
         assertEquals(0L, p.trackerListUpdatedAt)
         assertNull(p.trackerListSource)
     }
@@ -164,5 +164,27 @@ class PrefsTest {
         val p = Prefs(MemoryStore())
         p.searchProviderId = "gone"
         assertEquals("duckduckgo", p.searchProvider.id)
+    }
+
+    @Test fun privacyGuardGatesEffectiveSettings() {
+        val p = Prefs(MemoryStore())
+        p.httpsOnly = true
+        assertTrue(p.effectiveHttpsOnly); assertTrue(p.effectiveBlockThirdPartyCookies); assertTrue(p.effectiveSendGpc)
+        p.privacyGuard = false
+        assertFalse(p.effectiveHttpsOnly); assertFalse(p.effectiveBlockThirdPartyCookies); assertFalse(p.effectiveSendGpc)
+        assertTrue(p.httpsOnly) // the stored choice is kept for when the guard is switched back on
+    }
+
+    @Test fun textZoomIsClamped() {
+        val p = Prefs(MemoryStore())
+        assertEquals(100, p.pageTextZoom)
+        p.pageTextZoom = 500; assertEquals(Prefs.TEXT_ZOOM_MAX, p.pageTextZoom)
+        p.pageTextZoom = 1; assertEquals(Prefs.TEXT_ZOOM_MIN, p.pageTextZoom)
+    }
+
+    @Test fun pluginDefaults() {
+        val p = Prefs(MemoryStore())
+        assertTrue(p.pageToolsEnabled); assertFalse(p.blockImages); assertTrue(p.pageDarkening); assertTrue(p.confirmDownloads)
+        assertFalse(p.devToolsEnabled); assertFalse(p.devRemoteDebugging); assertEquals(0L, p.blockedTotal)
     }
 }

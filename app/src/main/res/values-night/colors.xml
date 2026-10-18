@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- XCSABER design tokens, DARK (deep charcoal and midnight). -->
 <resources>
-    <color name="xc_blue">#7AA7FF</color>
-    <color name="xc_blue_dark">#5B8DEF</color>
-    <color name="xc_blue_light">#1E2F57</color>
-    <color name="xc_surface">#121316</color>
-    <color name="xc_on_surface">#E8EAED</color>
-    <color name="xc_surface_variant">#1E2025</color>
-    <color name="xc_outline">#3A3E46</color>
-    <color name="xc_muted">#A0A6B1</color>
-    <color name="xc_error">#F28B82</color>
-    <color name="xc_ok">#81C995</color>
+    <color name="xc_blue">#4D8DFF</color>
+    <color name="xc_blue_dark">#3B78EA</color>
+    <color name="xc_blue_light">#1B2A4F</color>
+    <color name="xc_cyan">#2BD4F5</color>
+    <color name="xc_violet">#8E6BFF</color>
+    <color name="xc_on_accent">#06122B</color>
+
+    <color name="xc_bg">#0A0D14</color>
+    <color name="xc_surface">#11151E</color>
+    <color name="xc_surface_raised">#171C27</color>
+    <color name="xc_surface_variant">#151A25</color>
+    <color name="xc_surface_high">#1F2532</color>
+    <color name="xc_outline">#2A3244</color>
+    <color name="xc_outline_soft">#1C2230</color>
+
+    <color name="xc_on_surface">#EAEEF7</color>
+    <color name="xc_muted">#98A2B8</color>
+    <color name="xc_faint">#7683A0</color>
+
+    <color name="xc_ok">#3DDC97</color>
+    <color name="xc_warn">#FFC24D</color>
+    <color name="xc_error">#FF6B7A</color>
+
+    <color name="xc_blue_tint">#264D8DFF</color>
+    <color name="xc_cyan_tint">#262BD4F5</color>
+    <color name="xc_violet_tint">#268E6BFF</color>
+    <color name="xc_ok_tint">#263DDC97</color>
+    <color name="xc_warn_tint">#26FFC24D</color>
+    <color name="xc_error_tint">#26FF6B7A</color>
+
+    <color name="xc_hero_start">#162A57</color>
+    <color name="xc_hero_end">#1B1642</color>
+    <color name="xc_glow">#404D8DFF</color>
+    <color name="xc_scrim">#99000000</color>
+    <color name="xc_private_bar">#1A1530</color>
+    <color name="xc_on_private">#F2F0FF</color>
 </resources>

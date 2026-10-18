@@ -13,6 +13,7 @@ interface BrowserHost {
     fun onUrlChanged(tab: Tab, url: String)
     fun onProgress(tab: Tab, progress: Int)
     fun onTitle(tab: Tab, title: String)
+    fun onFavicon(tab: Tab)
     fun onError(tab: Tab, error: PageError)
     fun onRenderGone(tab: Tab)
 

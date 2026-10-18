@@ -5,7 +5,9 @@ import android.webkit.WebView
 import java.util.concurrent.atomic.AtomicInteger
 
 /** What the error screen should say for a tab. */
-data class PageError(val title: String, val message: String, val url: String)
+enum class ErrorKind { OFFLINE, NOT_FOUND, UNREACHABLE, SECURITY, OTHER }
+
+data class PageError(val title: String, val message: String, val url: String, val kind: ErrorKind = ErrorKind.OTHER)
 
 /**
  * One browser tab. A tab with an empty [url] shows the XCSABER home screen. The [webView] is
@@ -20,6 +22,8 @@ class Tab(val id: Long, val isPrivate: Boolean, val parentId: Long? = null) {
     var loading: Boolean = false
     var desktop: Boolean = false
     var thumbnail: Bitmap? = null
+    /** Small site icon reported by WebView; kept only in memory. */
+    var favicon: Bitmap? = null
     var error: PageError? = null
     /** True while the home screen is shown on top of an open page (the page stays alive underneath). */
     var showHome: Boolean = false
