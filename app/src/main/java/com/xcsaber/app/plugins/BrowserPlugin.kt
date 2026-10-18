@@ -5,7 +5,9 @@ import com.xcsaber.app.ui.SettingItem
 
 enum class PluginCategory(val label: String) {
     PRIVACY("Privacy & security"),
-    PAGE("Page"),
+    READING("Reading & appearance"),
+    CLEANUP("Page cleanup"),
+    PAGE("Page tools"),
     DEVELOPER("Developer"),
 }
 

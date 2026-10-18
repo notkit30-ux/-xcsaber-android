@@ -82,6 +82,10 @@ class XcWebViewClient(
         host.onPageFinished(tab, url)
     }
 
+    override fun onPageCommitVisible(view: WebView, url: String) {
+        host.onPageCommitVisible(tab, url)
+    }
+
     override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
         tab.url = url
         host.onUrlChanged(tab, url)

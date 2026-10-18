@@ -43,6 +43,8 @@ class XcApp : Application() {
         private set
     lateinit var plugins: PluginRegistry
         private set
+    lateinit var addons: com.xcsaber.app.plugins.AddonRuntime
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -61,9 +63,10 @@ class XcApp : Application() {
             BuiltinPlugins.create {
                 val nf = java.text.NumberFormat.getInstance()
                 nf.format(trackers.blocker.size) + " domains · " + nf.format(stats.sessionCount()) + " blocked this session"
-            },
+            } + com.xcsaber.app.plugins.AddonCatalog.all.map { com.xcsaber.app.plugins.ScriptAddonPlugin(it) },
             debugBuild = BuildConfig.DEBUG
         )
+        addons = com.xcsaber.app.plugins.AddonRuntime(assets, prefs)
         applyTheme(prefs.theme)
         // Loading the block list reads a file, so keep it off the main thread.
         Thread({ trackers.load() }, "xcsaber-trackers").start()

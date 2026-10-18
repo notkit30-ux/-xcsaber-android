@@ -76,6 +76,18 @@ class Prefs(private val store: KvStore) {
         get() = store.getBoolean(K_DEV_REMOTE, false)
         set(v) = store.putBoolean(K_DEV_REMOTE, v)
 
+    // ---- Script add-ons (bundled content scripts; see plugins/AddonEngine) ----
+    /** Ids of the enabled add-ons. */
+    var enabledAddons: Set<String>
+        get() = (store.getString(K_ADDONS, "") ?: "").split(',').filter { it.isNotBlank() }.toSet()
+        set(v) = store.putString(K_ADDONS, v.filter { it.matches(ADDON_ID) }.sorted().joinToString(","))
+
+    fun isAddonEnabled(id: String) = id in enabledAddons
+
+    fun setAddonEnabled(id: String, on: Boolean) {
+        enabledAddons = if (on) enabledAddons + id else enabledAddons - id
+    }
+
     /** Ask before saving a download. Risky file types always ask regardless. */
     var confirmDownloads: Boolean
         get() = store.getBoolean(K_CONFIRM_DL, true)
@@ -140,5 +152,7 @@ class Prefs(private val store: KvStore) {
         private const val K_DEV_ENABLED = "dev_tools_enabled"
         private const val K_DEV_REMOTE = "dev_remote_debugging"
         private const val K_CONFIRM_DL = "confirm_downloads"
+        private const val K_ADDONS = "addons_enabled"
+        private val ADDON_ID = Regex("[a-z0-9-]{1,40}")
     }
 }

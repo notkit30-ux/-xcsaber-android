@@ -1038,7 +1038,17 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
         if (isCurrent(tab)) render()
     }
 
+    override fun onPageCommitVisible(tab: Tab, url: String) = injectAddons(tab, url)
+
+    /** Runs the enabled script add-ons that apply to this page. Each add-on guards itself against running twice. */
+    private fun injectAddons(tab: Tab, url: String) {
+        if (tab.error != null) return
+        val script = xc.addons.scriptFor(url) ?: return
+        tab.webView?.evaluateJavascript(script, null)
+    }
+
     override fun onPageFinished(tab: Tab, url: String) {
+        injectAddons(tab, url)
         // Private tabs never touch history.
         if (!tab.isPrivate && prefs.saveHistory && tab.error == null &&
             UrlUtils.classifyScheme(url) == UrlUtils.Kind.WEB_URL
