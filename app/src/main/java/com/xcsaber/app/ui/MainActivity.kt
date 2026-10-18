@@ -152,12 +152,12 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
             fileCallback = null
         }
 
-    private val scriptFileLauncher =
+    private val scriptFileLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>> =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) userScriptFlow.onFilePicked(uri)
         }
 
-    private val userScriptFlow by lazy {
+    private val userScriptFlow: UserScriptFlow by lazy {
         UserScriptFlow(
             this, xc,
             message = { toast(it) },
