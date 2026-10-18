@@ -142,6 +142,10 @@ To add a native plugin: implement the interface, give it a `PluginInfo`, add it 
 - Private-tab cookie isolation depends on the phone's WebView (see above).
 - Not built for the Play Store yet (that needs a signed `.aab`, see SIGNING.md).
 
+## Open source
+
+XCSABER is open source under the [MIT License](LICENSE). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Please report security problems privately as described in [SECURITY.md](SECURITY.md).
+
 ## If the build fails
 
 Open the red step in the run and read the first line starting with `e:` (Kotlin error) or `error:` (resources). Common causes: a typo from copying a file by hand (use the zip), or a dependency version the runner cannot fetch (re-run once). The newest piece of Android API used is the WebView profile API in `privacy/PrivacyManager.kt`; if the compiler complains about `ProfileStore`, that file is the first place to look.
