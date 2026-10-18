@@ -45,6 +45,8 @@ class XcApp : Application() {
         private set
     lateinit var addons: com.xcsaber.app.plugins.AddonRuntime
         private set
+    lateinit var userScripts: com.xcsaber.app.userscripts.UserScriptStore
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -59,11 +61,13 @@ class XcApp : Application() {
         trackers = TrackerListManager(this, prefs)
         privacy = PrivacyManager(this, prefs, history, recents, bookmarks)
         stats = BlockStats(prefs)
+        userScripts = com.xcsaber.app.userscripts.UserScriptStore(secure)
         plugins = PluginRegistry(
             BuiltinPlugins.create {
                 val nf = java.text.NumberFormat.getInstance()
                 nf.format(trackers.blocker.size) + " domains · " + nf.format(stats.sessionCount()) + " blocked this session"
-            } + com.xcsaber.app.plugins.AddonCatalog.all.map { com.xcsaber.app.plugins.ScriptAddonPlugin(it) },
+            } + com.xcsaber.app.plugins.UserScriptsPlugin(userScripts) +
+                com.xcsaber.app.plugins.AddonCatalog.all.map { com.xcsaber.app.plugins.ScriptAddonPlugin(it) },
             debugBuild = BuildConfig.DEBUG
         )
         addons = com.xcsaber.app.plugins.AddonRuntime(assets, prefs)

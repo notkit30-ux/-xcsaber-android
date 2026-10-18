@@ -4,12 +4,15 @@ import com.xcsaber.app.data.Prefs
 import com.xcsaber.app.ui.SettingItem
 
 enum class PluginCategory(val label: String) {
+    SCRIPTS("Your scripts"),
     PRIVACY("Privacy & security"),
     READING("Reading & appearance"),
     CLEANUP("Page cleanup"),
     PAGE("Page tools"),
     DEVELOPER("Developer"),
 }
+
+enum class UserScriptSource { URL, PASTE, FILE }
 
 /** Accent used for a plugin's icon tile. */
 enum class PluginAccent { BLUE, CYAN, VIOLET, OK, WARN }
@@ -37,6 +40,10 @@ interface PluginHost {
     fun viewSourceOfCurrentPage()
     fun showPageInfo()
     fun clearHttpCache()
+    /** Starts installing a userscript from a web address, pasted code or a file the user picks. */
+    fun addUserScript(source: UserScriptSource)
+    fun viewUserScript(id: String)
+    fun removeUserScript(id: String)
     fun applyDeveloperSettings()
     fun message(text: String)
     /** Ask the UI to redraw plugin cards after state changed. */

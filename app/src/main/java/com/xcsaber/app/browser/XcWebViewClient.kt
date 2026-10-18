@@ -13,6 +13,7 @@ import com.xcsaber.app.data.Prefs
 import com.xcsaber.app.privacy.BlockStats
 import com.xcsaber.app.privacy.TrackerBlocker
 import com.xcsaber.app.search.UrlUtils
+import com.xcsaber.app.userscripts.UserScriptParser
 import java.io.ByteArrayInputStream
 
 /**
@@ -33,7 +34,10 @@ class XcWebViewClient(
         if (url == "about:blank") return false
         return when (UrlUtils.classifyScheme(url)) {
             UrlUtils.Kind.WEB_URL -> {
-                if (prefs.effectiveHttpsOnly && url.startsWith("http://", ignoreCase = true)) {
+                if (request.isForMainFrame && UserScriptParser.looksLikeUserScriptUrl(url)) {
+                    host.offerUserScript(url)
+                    true
+                } else if (prefs.effectiveHttpsOnly && url.startsWith("http://", ignoreCase = true)) {
                     view.loadUrl(UrlUtils.upgradeToHttps(url))
                     true
                 } else {

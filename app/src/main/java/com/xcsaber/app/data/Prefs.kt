@@ -82,6 +82,11 @@ class Prefs(private val store: KvStore) {
         get() = (store.getString(K_ADDONS, "") ?: "").split(',').filter { it.isNotBlank() }.toSet()
         set(v) = store.putString(K_ADDONS, v.filter { it.matches(ADDON_ID) }.sorted().joinToString(","))
 
+    /** Master switch for installed userscripts. */
+    var userScriptsEnabled: Boolean
+        get() = store.getBoolean(K_USERSCRIPTS, true)
+        set(v) = store.putBoolean(K_USERSCRIPTS, v)
+
     fun isAddonEnabled(id: String) = id in enabledAddons
 
     fun setAddonEnabled(id: String, on: Boolean) {
@@ -152,6 +157,7 @@ class Prefs(private val store: KvStore) {
         private const val K_DEV_ENABLED = "dev_tools_enabled"
         private const val K_DEV_REMOTE = "dev_remote_debugging"
         private const val K_CONFIRM_DL = "confirm_downloads"
+        private const val K_USERSCRIPTS = "userscripts_enabled"
         private const val K_ADDONS = "addons_enabled"
         private val ADDON_ID = Regex("[a-z0-9-]{1,40}")
     }

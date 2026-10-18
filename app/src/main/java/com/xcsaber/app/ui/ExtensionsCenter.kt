@@ -42,7 +42,11 @@ class ExtensionsCenter(
         PluginAccent.WARN -> R.drawable.bg_tile_warn to R.color.xc_warn
     }
 
+    /** Redraws the open plugin sheet, if any, so lists such as installed scripts stay current. */
+    private var sheetRebuild: (() -> Unit)? = null
+
     fun refresh() {
+        sheetRebuild?.invoke()
         val prefs = xc.prefs
         val groups = xc.plugins.grouped()
         val all = groups.flatMap { it.second }
@@ -107,6 +111,7 @@ class ExtensionsCenter(
             }
         }
         rebuild()
-        Sheets.show(activity, root)
+        sheetRebuild = rebuild
+        Sheets.show(activity, root).setOnDismissListener { sheetRebuild = null }
     }
 }

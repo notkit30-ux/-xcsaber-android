@@ -63,6 +63,8 @@ import com.xcsaber.app.BuildConfig
 import com.xcsaber.app.R
 import com.xcsaber.app.XcApp
 import com.xcsaber.app.browser.BrowserHost
+import com.xcsaber.app.plugins.UserScriptSource
+import com.xcsaber.app.userscripts.UserScriptRuntime
 import com.xcsaber.app.browser.ErrorKind
 import com.xcsaber.app.browser.PageError
 import com.xcsaber.app.browser.SitePermission
@@ -149,6 +151,20 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
             fileCallback?.onReceiveValue(uris)
             fileCallback = null
         }
+
+    private val scriptFileLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) userScriptFlow.onFilePicked(uri)
+        }
+
+    private val userScriptFlow by lazy {
+        UserScriptFlow(
+            this, xc,
+            message = { toast(it) },
+            pickFile = { scriptFileLauncher.launch(arrayOf("*/*")) },
+            changed = { reloadCurrentPage(); pluginsChanged() },
+        )
+    }
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -1043,9 +1059,20 @@ class MainActivity : AppCompatActivity(), BrowserHost, PanelBridge {
     /** Runs the enabled script add-ons that apply to this page. Each add-on guards itself against running twice. */
     private fun injectAddons(tab: Tab, url: String) {
         if (tab.error != null) return
-        val script = xc.addons.scriptFor(url) ?: return
-        tab.webView?.evaluateJavascript(script, null)
+        val wv = tab.webView ?: return
+        xc.addons.scriptFor(url)?.let { wv.evaluateJavascript(it, null) }
+        // Userscripts: each one is injected separately so one broken script cannot stop the rest.
+        UserScriptRuntime.scriptsFor(xc.userScripts.all(), url, prefs.userScriptsEnabled)
+            .forEach { wv.evaluateJavascript(it, null) }
     }
+
+    override fun offerUserScript(url: String) = userScriptFlow.fetchAndOffer(url)
+
+    override fun addUserScript(source: UserScriptSource) = userScriptFlow.add(source)
+
+    override fun viewUserScript(id: String) = userScriptFlow.view(id)
+
+    override fun removeUserScript(id: String) = userScriptFlow.remove(id)
 
     override fun onPageFinished(tab: Tab, url: String) {
         injectAddons(tab, url)
