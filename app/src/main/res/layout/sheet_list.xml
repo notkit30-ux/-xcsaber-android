@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/space_2">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/space_2"
+        android:background="@drawable/bg_sheet_handle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_5"
+        android:paddingTop="@dimen/space_3"
+        android:paddingEnd="@dimen/space_2">
+
+        <TextView
+            android:id="@+id/sheetTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.Xc.Headline" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sheetClearAll"
+            style="@style/Widget.Xc.Button.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/clear_all"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/listFilter"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginStart="@dimen/space_4"
+        android:layout_marginTop="@dimen/space_2"
+        android:layout_marginEnd="@dimen/space_4"
+        android:background="@drawable/bg_search_pill"
+        android:drawableStart="@drawable/ic_search"
+        android:drawablePadding="@dimen/space_2"
+        android:drawableTint="@color/xc_muted"
+        android:hint="@string/sheet_search_hint"
+        android:importantForAutofill="no"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingStart="@dimen/space_3"
+        android:paddingEnd="@dimen/space_3"
+        android:textColor="@color/xc_on_surface"
+        android:textColorHint="@color/xc_faint"
+        android:textSize="15sp"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/listEmptyState"
+        layout="@layout/view_empty_state"
+        android:visibility="gone" />
+
+    <com.xcsaber.app.ui.MaxHeightRecyclerView
+        android:id="@+id/listRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_2"
+        android:overScrollMode="never" />
+</LinearLayout>

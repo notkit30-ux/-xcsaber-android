@@ -2,7 +2,7 @@
 
 An Android search engine and private web browser, written in Kotlin with the real Android WebView. It is built to be compiled by **GitHub Actions**, so you can produce an APK using only an Android phone.
 
-> **Honest status.** All the logic that does not need Android itself (URL handling, search URLs, tracker blocking, tabs, history, bookmarks, downloads policy, preferences) was compiled and its 66 unit tests passed on a computer. The Android screens were reviewed line by line but **have not been compiled or run on a device yet**. The first GitHub Actions run is the real compile test. If it fails, the log shows the exact line, so send me the red error text and I will fix it. Nothing in this README claims the APK works until your own build turns green.
+> **Honest status (v1.1.0).** All the logic that does not need Android itself (URL handling, search URLs, tracker blocking, block statistics, plugin registry, settings model and search, tabs, history, bookmarks, downloads policy, preferences) was compiled and its 105 unit tests passed on a computer. The Android screens and layouts of the 1.1.0 upgrade were cross-checked by script (every resource, string, style and view-binding reference resolves, all XML parses) but **have not been compiled or run on a device yet**. The first GitHub Actions run is the real compile test. If it fails, the log shows the exact line, so send me the red error text and I will fix it.
 
 ## What it does
 
@@ -18,7 +18,12 @@ An Android search engine and private web browser, written in Kotlin with the rea
 | Tabs | Many tabs, tab switcher with page previews, private tabs, open links in a new tab or new private tab. |
 | Browser | Back, forward, reload/stop, home, share, bookmark, find in page, desktop-site mode, full-screen video, file upload, pop-up control, downloads through Android's DownloadManager. |
 | Home | Customizable shortcuts (tap **+** to add; long-press a tile to remove; long-press **+** to reset). Recent searches. |
-| Look | White and blue Material 3 design with an original logo, light/dark/system theme, splash screen. |
+| Look | Dark-first midnight design (light and system themes too) with electric-blue, cyan and violet accents, an original logo, splash screen, and a shared design system (`values/colors.xml`, `dimens.xml`, `type.xml`, `styles.xml`). Animations follow Android's "remove animations" setting. |
+| Privacy Center | Big protection switch, real blocked-request counts (this session and lifetime, normal tabs only), blocklist source, domain count and last update, an **Update list** action with progress and error states, and a plain summary of which protections are active. All of it drives the real `TrackerBlocker` used by `XcWebViewClient`. |
+| Extensions & Plugins | Native plugins: **Ad & Tracker Blocker**, **Privacy Guard** (master switch for third-party cookie blocking, HTTPS-only and Global Privacy Control), **Page Tools** (text zoom, block images, darken websites, print / save as PDF) and **Developer Tools** (debug builds only: remote debugging, page info, view source, clear cache). |
+| Script add-ons | 14 built-in add-ons in the Extensions Center: Dark Pages, Night Shift, Reading Mode, Force Zoom, Unlock Selection, Cookie Banner Hider, Pop-up Remover, Stop Autoplay, Sticky Header Remover, Distraction-free YouTube, Clean Links, Same-tab Links, Password Peek and a Back-to-top button. Each switches on and off and applies to pages as they load. |
+| Userscripts | A Tampermonkey-style script manager (**Extensions → Userscripts**): install `.user.js` scripts from a web address, by pasting code or from a file, or just tap a `.user.js` link (Greasy Fork, GitHub raw). Supports `@match`, `@include`, `@exclude`, `@run-at` and a subset of the `GM_` API. |
+| Settings | Categorised settings with descriptions, search, theme, search engine, privacy, downloads, and an About page with version and build info. |
 
 ## Privacy and security (what is and is not true)
 
@@ -94,14 +99,34 @@ xcsaber/
         │   │   ├── search/                   SearchProvider, SearchEngine, SuggestionClient, UrlUtils, SearchCategory
         │   │   ├── browser/                  Tab, TabManager, XcWebViewClient, XcChromeClient, BrowserHost,
         │   │   │                             SitePermissionStore, UserAgents
-        │   │   ├── privacy/                  PrivacyManager, TrackerBlocker, TrackerListManager
+        │   │   ├── privacy/                  PrivacyManager, TrackerBlocker, TrackerListManager, BlockStats
+        │   │   ├── plugins/                  BrowserPlugin, PluginRegistry, BuiltinPlugins (native plugin framework)
         │   │   ├── data/                     SecureStore, Prefs, BookmarkStore, HistoryStore,
         │   │   │                             RecentSearchStore, ShortcutStore, models
         │   │   ├── downloads/                DownloadHelper, DownloadPolicy, DownloadStore
-        │   │   └── ui/                       MainActivity, Adapters, ListDialog
+        │   │   └── ui/                       MainActivity, Adapters, ListDialog, Sheets, Motion,
+        │   │   │                             PrivacyCenter, ExtensionsCenter, SettingsScreen, SettingsAdapter, SettingItem
         │   └── res/                          layouts, themes (light/dark), icons, strings, menus
-        └── test/java/com/xcsaber/app/        66 JVM unit tests
+        └── test/java/com/xcsaber/app/        105 JVM unit tests
 ```
+
+## Plugin framework
+
+Plugins implement `BrowserPlugin` (`plugins/BrowserPlugin.kt`) and are registered in `PluginRegistry`. They are compiled into the app. **Nothing is downloaded or executed at runtime**, and Chrome/Firefox extensions are not supported, because Android WebView cannot load them. ### Script add-ons
+
+Add-ons are small content scripts bundled in `app/src/main/assets/addons/<id>.js` and listed in `plugins/AddonCatalog.kt`. `AddonEngine` picks the enabled ones for a page (web pages only, host-matched) and wraps each so it runs once and cannot break the page or other add-ons; `XcWebViewClient` triggers injection when a page becomes visible and when it finishes loading. Add-ons only run inside the web page. They get no access to XCSABER's data or Android APIs, and nothing is downloaded. To add one: write the `.js` file (helpers `xcCss(text)` and `xcReady(fn)` are provided), add a `ScriptAddon(...)` line to the catalog.
+
+### Userscripts (Tampermonkey-style)
+
+The real Tampermonkey extension cannot run in Android WebView, so XCSABER has its own compatible script manager (`userscripts/`). Every install shows a confirmation with the name, version and the sites the script will run on, a clear warning for scripts that run on every site, and a *View code* button. Only `https://` addresses can be downloaded, scripts are limited to 128 KB each and 40 in total, and they are stored in the app's encrypted storage.
+
+How they run: injected into the main page when it becomes visible and when it finishes loading, each in its own try/catch. XCSABER exposes **no** JavaScript bridge, so a script can do what the page itself can do (read and change that page, use its cookies and storage) and nothing else. Private tabs run scripts too.
+
+Supported: `@name @namespace @version @description @match @include @exclude @exclude-match @run-at @grant`; `GM_addStyle GM_getValue GM_setValue GM_deleteValue GM_listValues GM_log GM_info GM_openInTab GM_setClipboard GM_registerMenuCommand`, the `GM.*` promise forms of the same, and `unsafeWindow`. **Not supported:** `GM_xmlhttpRequest`, `GM_download`, `GM_notification`, `@require` and `@resource` downloads, and menu commands (they are accepted but do nothing). Many popular scripts need `GM_xmlhttpRequest`, so those will only partly work. Scripts run in the page itself rather than a separate sandbox, and `document-start` means "as soon as the page is visible", slightly later than in desktop Tampermonkey. Values saved with `GM_setValue` live in the site's own storage, so they are per website.
+
+The built-in add-ons above are **not** Chrome extensions: Android WebView cannot load those. Installing arbitrary third-party scripts is deliberately not offered yet, because that would run untrusted code on pages where you are signed in.
+
+To add a native plugin: implement the interface, give it a `PluginInfo`, add it to the registry list, and add any new preference to `Prefs`.
 
 ## Tests
 
@@ -112,8 +137,14 @@ xcsaber/
 - Search results are the providers' web pages, so layout and ads are theirs. There is no custom result renderer.
 - Videos play on the website's own player (full-screen supported). `blob:` and `data:` downloads are not supported.
 - Tab previews are small in-memory snapshots of normal tabs.
-- Tracker blocking matches domains only; it does not hide page elements.
+- Tracker blocking matches domains only; it does not hide page elements, and it cannot remove all ads. Lifetime counts exclude private tabs by design.
+- Darken websites only works while the app theme is dark, and only on WebView versions that support algorithmic darkening.
+- Private-tab cookie isolation depends on the phone's WebView (see above).
 - Not built for the Play Store yet (that needs a signed `.aab`, see SIGNING.md).
+
+## Open source
+
+XCSABER is open source under the [MIT License](LICENSE). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Please report security problems privately as described in [SECURITY.md](SECURITY.md).
 
 ## If the build fails
 

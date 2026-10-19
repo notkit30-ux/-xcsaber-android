@@ -6,7 +6,7 @@ import com.xcsaber.app.search.SearchProvider
 class Prefs(private val store: KvStore) {
 
     var theme: String
-        get() = store.getString(K_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
+        get() = store.getString(K_THEME, THEME_DEFAULT) ?: THEME_DEFAULT
         set(v) = store.putString(K_THEME, v)
 
     var searchProviderId: String
@@ -19,13 +19,84 @@ class Prefs(private val store: KvStore) {
         get() = store.getBoolean(K_TRACKERS, true)
         set(v) = store.putBoolean(K_TRACKERS, v)
 
+    /** Stored switch for third-party cookie blocking. Use [effectiveBlockThirdPartyCookies] to apply it. */
     var blockThirdPartyCookies: Boolean
         get() = store.getBoolean(K_3P_COOKIES, true)
         set(v) = store.putBoolean(K_3P_COOKIES, v)
 
+    /** Stored switch for HTTPS-only. Use [effectiveHttpsOnly] to apply it. */
     var httpsOnly: Boolean
         get() = store.getBoolean(K_HTTPS_ONLY, false)
         set(v) = store.putBoolean(K_HTTPS_ONLY, v)
+
+    /** Stored switch for sending Global Privacy Control / Do Not Track. Use [effectiveSendGpc]. */
+    var sendGpc: Boolean
+        get() = store.getBoolean(K_GPC, true)
+        set(v) = store.putBoolean(K_GPC, v)
+
+    /** Privacy Guard plugin master switch: when off, the three protections above are not applied. */
+    var privacyGuard: Boolean
+        get() = store.getBoolean(K_GUARD, true)
+        set(v) = store.putBoolean(K_GUARD, v)
+
+    val effectiveBlockThirdPartyCookies: Boolean get() = privacyGuard && blockThirdPartyCookies
+    val effectiveHttpsOnly: Boolean get() = privacyGuard && httpsOnly
+    val effectiveSendGpc: Boolean get() = privacyGuard && sendGpc
+
+    /** Lifetime count of blocked requests from normal (non-private) tabs. */
+    var blockedTotal: Long
+        get() = store.getLong(K_BLOCKED_TOTAL, 0L)
+        set(v) = store.putLong(K_BLOCKED_TOTAL, v)
+
+    // ---- Page Tools plugin ----
+    var pageToolsEnabled: Boolean
+        get() = store.getBoolean(K_PT_ENABLED, true)
+        set(v) = store.putBoolean(K_PT_ENABLED, v)
+
+    /** Page text zoom in percent, clamped to [TEXT_ZOOM_MIN]..[TEXT_ZOOM_MAX]. */
+    var pageTextZoom: Int
+        get() = store.getLong(K_PT_ZOOM, 100L).toInt().coerceIn(TEXT_ZOOM_MIN, TEXT_ZOOM_MAX)
+        set(v) = store.putLong(K_PT_ZOOM, v.coerceIn(TEXT_ZOOM_MIN, TEXT_ZOOM_MAX).toLong())
+
+    /** Darken websites while the app theme is dark (WebView algorithmic darkening). */
+    var pageDarkening: Boolean
+        get() = store.getBoolean(K_PT_DARK, true)
+        set(v) = store.putBoolean(K_PT_DARK, v)
+
+    var blockImages: Boolean
+        get() = store.getBoolean(K_PT_IMAGES, false)
+        set(v) = store.putBoolean(K_PT_IMAGES, v)
+
+    // ---- Developer tools plugin (only reachable in debug builds) ----
+    var devToolsEnabled: Boolean
+        get() = store.getBoolean(K_DEV_ENABLED, false)
+        set(v) = store.putBoolean(K_DEV_ENABLED, v)
+
+    var devRemoteDebugging: Boolean
+        get() = store.getBoolean(K_DEV_REMOTE, false)
+        set(v) = store.putBoolean(K_DEV_REMOTE, v)
+
+    // ---- Script add-ons (bundled content scripts; see plugins/AddonEngine) ----
+    /** Ids of the enabled add-ons. */
+    var enabledAddons: Set<String>
+        get() = (store.getString(K_ADDONS, "") ?: "").split(',').filter { it.isNotBlank() }.toSet()
+        set(v) = store.putString(K_ADDONS, v.filter { it.matches(ADDON_ID) }.sorted().joinToString(","))
+
+    /** Master switch for installed userscripts. */
+    var userScriptsEnabled: Boolean
+        get() = store.getBoolean(K_USERSCRIPTS, true)
+        set(v) = store.putBoolean(K_USERSCRIPTS, v)
+
+    fun isAddonEnabled(id: String) = id in enabledAddons
+
+    fun setAddonEnabled(id: String, on: Boolean) {
+        enabledAddons = if (on) enabledAddons + id else enabledAddons - id
+    }
+
+    /** Ask before saving a download. Risky file types always ask regardless. */
+    var confirmDownloads: Boolean
+        get() = store.getBoolean(K_CONFIRM_DL, true)
+        set(v) = store.putBoolean(K_CONFIRM_DL, v)
 
     var saveHistory: Boolean
         get() = store.getBoolean(K_SAVE_HISTORY, true)
@@ -59,6 +130,10 @@ class Prefs(private val store: KvStore) {
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
+        /** XCSABER is designed dark-first. */
+        const val THEME_DEFAULT = THEME_DARK
+        const val TEXT_ZOOM_MIN = 50
+        const val TEXT_ZOOM_MAX = 200
 
         private const val K_THEME = "theme"
         private const val K_PROVIDER = "provider"
@@ -72,5 +147,18 @@ class Prefs(private val store: KvStore) {
         private const val K_SUGGEST = "search_suggestions"
         private const val K_LIST_TS = "tracker_list_ts"
         private const val K_LIST_SRC = "tracker_list_src"
+        private const val K_GPC = "send_gpc"
+        private const val K_GUARD = "privacy_guard"
+        private const val K_BLOCKED_TOTAL = "blocked_total"
+        private const val K_PT_ENABLED = "page_tools_enabled"
+        private const val K_PT_ZOOM = "page_text_zoom"
+        private const val K_PT_DARK = "page_darkening"
+        private const val K_PT_IMAGES = "block_images"
+        private const val K_DEV_ENABLED = "dev_tools_enabled"
+        private const val K_DEV_REMOTE = "dev_remote_debugging"
+        private const val K_CONFIRM_DL = "confirm_downloads"
+        private const val K_USERSCRIPTS = "userscripts_enabled"
+        private const val K_ADDONS = "addons_enabled"
+        private val ADDON_ID = Regex("[a-z0-9-]{1,40}")
     }
 }

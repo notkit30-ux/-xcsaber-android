@@ -4,7 +4,7 @@
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
+    android:background="@color/xc_bg"
     android:focusable="true"
     android:focusableInTouchMode="true">
 
@@ -14,17 +14,17 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Top bar: search/address pill + menu -->
+        <!-- Top bar: address/search pill, tab count, menu. Hidden on the plain home screen. -->
         <LinearLayout
             android:id="@+id/topBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="12dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="8dp">
+            android:paddingStart="@dimen/space_3"
+            android:paddingTop="@dimen/space_2"
+            android:paddingEnd="@dimen/space_1"
+            android:paddingBottom="@dimen/space_2">
 
             <LinearLayout
                 android:id="@+id/searchPill"
@@ -34,15 +34,18 @@
                 android:background="@drawable/bg_search_pill"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="4dp">
+                android:paddingStart="@dimen/space_1"
+                android:paddingEnd="@dimen/space_1">
 
                 <ImageView
                     android:id="@+id/securityIcon"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/cd_security"
-                    android:src="@drawable/ic_search" />
+                    android:padding="11dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/xc_muted" />
 
                 <EditText
                     android:id="@+id/searchField"
@@ -55,12 +58,28 @@
                     android:importantForAutofill="no"
                     android:inputType="text|textNoSuggestions"
                     android:maxLines="1"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="4dp"
+                    android:paddingStart="@dimen/space_1"
+                    android:paddingEnd="@dimen/space_1"
                     android:selectAllOnFocus="true"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textColorHint="?attr/colorOnSurfaceVariant"
+                    android:textColor="@color/xc_on_surface"
+                    android:textColorHint="@color/xc_faint"
                     android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/privateBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/space_1"
+                    android:background="@drawable/bg_private_badge"
+                    android:paddingStart="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="3dp"
+                    android:text="@string/private_badge"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <ImageButton
                     android:id="@+id/clearButton"
@@ -68,8 +87,10 @@
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/cd_clear"
+                    android:padding="11dp"
                     android:src="@drawable/ic_close"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    app:tint="@color/xc_muted" />
 
                 <ImageButton
                     android:id="@+id/micButton"
@@ -77,27 +98,42 @@
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/cd_voice_search"
-                    android:src="@drawable/ic_mic" />
+                    android:padding="10dp"
+                    android:src="@drawable/ic_mic"
+                    app:tint="@color/xc_muted" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/privateBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="@string/private_badge"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
+            <FrameLayout
+                android:id="@+id/tabCountButton"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_tab_count"
+                android:focusable="true"
+                android:clickable="true">
+
+                <TextView
+                    android:id="@+id/tabCountText"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_tab_count"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="@color/xc_on_surface"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
 
             <ImageButton
                 android:id="@+id/menuButton"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_menu"
-                android:src="@drawable/ic_more" />
+                android:padding="12dp"
+                android:src="@drawable/ic_more"
+                app:tint="@color/xc_on_surface" />
         </LinearLayout>
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -106,200 +142,439 @@
             android:layout_height="wrap_content"
             android:max="100"
             android:visibility="gone"
-            app:trackThickness="2dp" />
+            app:indicatorColor="@color/xc_blue"
+            app:trackColor="@android:color/transparent"
+            app:trackThickness="3dp" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/categoryTabs"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorSurface"
+            android:layout_height="44dp"
+            android:background="@android:color/transparent"
+            android:visibility="gone"
             app:tabGravity="start"
-            app:tabMode="scrollable" />
+            app:tabIndicatorColor="@color/xc_blue"
+            app:tabIndicatorFullWidth="false"
+            app:tabMode="scrollable"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabTextAppearance="@style/TextAppearance.Xc.Tab"
+            app:tabTextColor="@color/tab_text" />
 
-        <!-- Main content area: only one child is visible at a time -->
         <FrameLayout
             android:id="@+id/content"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <ScrollView
+            <!-- Home screen -->
+            <androidx.core.widget.NestedScrollView
                 android:id="@+id/homeScroll"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:fillViewport="true">
+                android:clipToPadding="false"
+                android:fillViewport="true"
+                android:overScrollMode="never"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="16dp"
-                    android:paddingTop="24dp"
-                    android:paddingEnd="16dp"
-                    android:paddingBottom="24dp">
+                    android:paddingStart="@dimen/space_5"
+                    android:paddingEnd="@dimen/space_5"
+                    android:paddingBottom="@dimen/space_6">
 
-                    <ImageView
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
-                        android:layout_gravity="center_horizontal"
-                        android:background="@drawable/ic_launcher_legacy_bg"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_launcher_foreground" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="12dp"
-                        android:letterSpacing="0.12"
-                        android:text="@string/app_name"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="32sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/tagline"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="28dp"
-                        android:text="@string/shortcuts"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/shortcutList"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:nestedScrollingEnabled="false" />
-
+                    <!-- Brand -->
                     <LinearLayout
+                        android:id="@+id/homeHero"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <FrameLayout
+                            android:layout_width="96dp"
+                            android:layout_height="96dp">
+
+                            <View
+                                android:layout_width="96dp"
+                                android:layout_height="96dp"
+                                android:background="@drawable/bg_glow_ring" />
+
+                            <ImageView
+                                android:layout_width="72dp"
+                                android:layout_height="72dp"
+                                android:layout_gravity="center"
+                                android:background="@drawable/bg_logo_tile"
+                                android:contentDescription="@string/cd_logo"
+                                android:padding="0dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/ic_launcher_foreground" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_3"
+                            android:text="@string/app_name"
+                            android:textAppearance="@style/TextAppearance.Xc.Wordmark" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_1"
+                            android:gravity="center"
+                            android:text="@string/tagline"
+                            android:textAppearance="@style/TextAppearance.Xc.BodySmall" />
+                    </LinearLayout>
+
+                    <!-- Big search pill: opens the real search field -->
+                    <LinearLayout
+                        android:id="@+id/homeSearchPill"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="@dimen/space_6"
+                        android:background="@drawable/bg_search_pill"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/space_4"
+                        android:paddingEnd="@dimen/space_2">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_search"
+                            app:tint="@color/xc_blue" />
+
+                        <TextView
+                            android:id="@+id/homeSearchHint"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_3"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="@string/home_search_hint"
+                            android:textColor="@color/xc_faint"
+                            android:textSize="16sp" />
+
+                        <ImageButton
+                            android:id="@+id/homeMicButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/cd_voice_search"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_mic"
+                            app:tint="@color/xc_muted" />
+                    </LinearLayout>
+
+                    <!-- Provider + protection status chips -->
+                    <LinearLayout
+                        android:id="@+id/homeChips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_3"
+                        android:gravity="center"
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/recentLabel"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/recent_searches"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:id="@+id/homeProviderChip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_chip_status"
+                            android:contentDescription="@string/cd_provider"
+                            android:drawableStart="@drawable/ic_search_engine"
+                            android:drawablePadding="6dp"
+                            android:drawableTint="@color/xc_muted"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="14dp"
+                            android:textAppearance="@style/TextAppearance.Xc.Chip"
+                            android:textColor="@color/xc_on_surface" />
 
                         <TextView
-                            android:id="@+id/clearRecentButton"
+                            android:id="@+id/homeProtectionChip"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
-                            android:padding="8dp"
-                            android:text="@string/clear_all"
-                            android:textColor="?attr/colorPrimary"
-                            android:textSize="13sp" />
+                            android:layout_height="36dp"
+                            android:layout_marginStart="@dimen/space_2"
+                            android:background="@drawable/bg_chip_status"
+                            android:drawableStart="@drawable/ic_shield_check"
+                            android:drawablePadding="6dp"
+                            android:drawableTint="@color/xc_ok"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="14dp"
+                            android:textAppearance="@style/TextAppearance.Xc.Chip"
+                            android:textColor="@color/xc_on_surface" />
                     </LinearLayout>
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recentList"
+                    <!-- Quick actions -->
+                    <LinearLayout
+                        android:id="@+id/homeActions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false" />
+                        android:layout_marginTop="@dimen/space_6"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/recentEmpty"
-                        android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:id="@+id/qaBookmarks"
+                            style="@style/Widget.Xc.QuickAction">
+
+                            <ImageView
+                                style="@style/Widget.Xc.QuickActionIcon"
+                                android:background="@drawable/bg_tile_blue"
+                                android:src="@drawable/ic_star"
+                                app:tint="@color/xc_blue" />
+
+                            <TextView
+                                style="@style/Widget.Xc.QuickActionLabel"
+                                android:text="@string/qa_bookmarks" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/qaHistory"
+                            style="@style/Widget.Xc.QuickAction">
+
+                            <ImageView
+                                style="@style/Widget.Xc.QuickActionIcon"
+                                android:background="@drawable/bg_tile_cyan"
+                                android:src="@drawable/ic_history"
+                                app:tint="@color/xc_cyan" />
+
+                            <TextView
+                                style="@style/Widget.Xc.QuickActionLabel"
+                                android:text="@string/qa_history" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/qaDownloads"
+                            style="@style/Widget.Xc.QuickAction">
+
+                            <ImageView
+                                style="@style/Widget.Xc.QuickActionIcon"
+                                android:background="@drawable/bg_tile_violet"
+                                android:src="@drawable/ic_download"
+                                app:tint="@color/xc_violet" />
+
+                            <TextView
+                                style="@style/Widget.Xc.QuickActionLabel"
+                                android:text="@string/qa_downloads" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/qaPrivacy"
+                            style="@style/Widget.Xc.QuickAction">
+
+                            <ImageView
+                                style="@style/Widget.Xc.QuickActionIcon"
+                                android:background="@drawable/bg_tile_ok"
+                                android:src="@drawable/ic_shield"
+                                app:tint="@color/xc_ok" />
+
+                            <TextView
+                                style="@style/Widget.Xc.QuickActionLabel"
+                                android:text="@string/qa_privacy" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/qaSettings"
+                            style="@style/Widget.Xc.QuickAction">
+
+                            <ImageView
+                                style="@style/Widget.Xc.QuickActionIcon"
+                                android:background="@drawable/bg_tile_warn"
+                                android:src="@drawable/ic_settings"
+                                app:tint="@color/xc_warn" />
+
+                            <TextView
+                                style="@style/Widget.Xc.QuickActionLabel"
+                                android:text="@string/qa_settings" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Shortcuts -->
+                    <LinearLayout
+                        android:id="@+id/homeShortcuts"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/no_recent_searches"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/Xc.Text.SectionLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_2"
+                            android:text="@string/shortcuts" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/shortcutList"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:overScrollMode="never" />
+                    </LinearLayout>
+
+                    <!-- Recent searches -->
+                    <LinearLayout
+                        android:id="@+id/homeRecent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/recentLabel"
+                                style="@style/Xc.Text.SectionLabel"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/recent_searches" />
+
+                            <TextView
+                                android:id="@+id/clearRecentButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:minHeight="@dimen/touch_min"
+                                android:gravity="center"
+                                android:paddingStart="@dimen/space_2"
+                                android:paddingEnd="@dimen/space_2"
+                                android:text="@string/clear_all"
+                                android:textAppearance="@style/TextAppearance.Xc.Chip"
+                                android:textColor="@color/xc_blue" />
+                        </LinearLayout>
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recentList"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:overScrollMode="never" />
+
+                        <TextView
+                            android:id="@+id/recentEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_card"
+                            android:drawablePadding="@dimen/space_2"
+                            android:drawableTint="@color/xc_faint"
+                            android:drawableTop="@drawable/ic_history"
+                            android:gravity="center"
+                            android:padding="@dimen/space_5"
+                            android:text="@string/no_recent_searches"
+                            android:textAppearance="@style/TextAppearance.Xc.BodySmall" />
+                    </LinearLayout>
                 </LinearLayout>
-            </ScrollView>
+            </androidx.core.widget.NestedScrollView>
 
             <FrameLayout
                 android:id="@+id/webContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@color/xc_surface"
                 android:visibility="gone" />
 
+            <!-- Error / offline -->
             <LinearLayout
                 android:id="@+id/errorView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
+                android:background="@color/xc_bg"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="32dp"
+                android:padding="@dimen/space_6"
                 android:visibility="gone">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
+                    android:id="@+id/errorIcon"
+                    android:layout_width="@dimen/tile_l"
+                    android:layout_height="@dimen/tile_l"
+                    android:background="@drawable/bg_tile_error"
                     android:contentDescription="@null"
-                    android:src="@drawable/ic_lock_open" />
+                    android:padding="14dp"
+                    android:src="@drawable/ic_alert"
+                    app:tint="@color/xc_error" />
 
                 <TextView
                     android:id="@+id/errorTitle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/error_generic_title"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="@dimen/space_4"
+                    android:gravity="center"
+                    android:textAppearance="@style/TextAppearance.Xc.Headline" />
 
                 <TextView
                     android:id="@+id/errorMessage"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="@dimen/space_2"
                     android:gravity="center"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="14sp" />
+                    android:textAppearance="@style/TextAppearance.Xc.Body"
+                    android:textColor="@color/xc_muted" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/retryButton"
+                    style="@style/Widget.Xc.Button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="@dimen/space_6"
                     android:text="@string/retry" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/errorHomeButton"
-                    style="@style/Widget.Material3.Button.TextButton"
+                    style="@style/Widget.Xc.Button.Text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/go_home" />
             </LinearLayout>
 
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/suggestionList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/xc_bg"
+                android:visibility="gone" />
+
+            <!-- Tab switcher -->
             <LinearLayout
                 android:id="@+id/tabsPanel"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
+                android:background="@color/xc_bg"
                 android:orientation="vertical"
-                android:padding="12dp"
                 android:visibility="gone">
 
-                <TextView
-                    android:id="@+id/tabsTitle"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="@string/tabs"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/space_5"
+                    android:paddingTop="@dimen/space_4"
+                    android:paddingEnd="@dimen/space_5"
+                    android:paddingBottom="@dimen/space_2">
+
+                    <TextView
+                        android:id="@+id/tabsTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.Xc.Headline" />
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/tabsList"
@@ -307,191 +582,45 @@
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:clipToPadding="false"
-                    android:paddingTop="8dp" />
+                    android:paddingStart="@dimen/space_3"
+                    android:paddingEnd="@dimen/space_3"
+                    android:paddingBottom="@dimen/space_3" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="@dimen/space_3">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/newTabButton"
+                        style="@style/Widget.Xc.Button"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
+                        android:layout_marginEnd="@dimen/space_1"
                         android:layout_weight="1"
-                        android:text="@string/new_tab" />
+                        android:text="@string/new_tab"
+                        app:icon="@drawable/ic_add"
+                        app:iconTint="@color/xc_on_accent" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/newPrivateTabButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        style="@style/Widget.Xc.Button.Tonal"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
+                        android:layout_marginStart="@dimen/space_1"
                         android:layout_weight="1"
-                        android:text="@string/new_private_tab" />
+                        android:text="@string/new_private_tab"
+                        app:icon="@drawable/ic_private" />
                 </LinearLayout>
             </LinearLayout>
 
-            <ScrollView
-                android:id="@+id/privacyPanel"
+            <!-- Privacy Center / Extensions / Settings are inflated into this host on demand -->
+            <FrameLayout
+                android:id="@+id/panelHost"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/privacy_and_settings"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/trackerSwitch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/block_trackers" />
-
-                    <TextView
-                        android:id="@+id/trackerInfo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/updateTrackersButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/update_tracker_list" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/cookieSwitch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/block_third_party_cookies" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/httpsSwitch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/https_only" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/popupSwitch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/block_popups" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/suggestSwitch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/search_suggestions" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/historySwitch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/save_history" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/clearDataButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/clear_browsing_data" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/endPrivateButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/end_private_session" />
-
-                    <TextView
-                        android:id="@+id/privateNote"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:text="@string/settings"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/providerButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/themeButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookmarksButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/bookmarks" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/historyButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/history" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/downloadsButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/downloads" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/siteSettingsButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/site_permissions" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="@string/privacy_honesty"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </ScrollView>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/suggestionList"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
+                android:background="@color/xc_bg"
                 android:visibility="gone" />
         </FrameLayout>
 
@@ -499,17 +628,18 @@
         <LinearLayout
             android:id="@+id/findBar"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="?attr/colorSurfaceVariant"
+            android:layout_height="wrap_content"
+            android:background="@color/xc_surface_raised"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="12dp"
+            android:paddingStart="@dimen/space_3"
+            android:paddingEnd="@dimen/space_1"
             android:visibility="gone">
 
             <EditText
                 android:id="@+id/findField"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="@dimen/touch_min"
                 android:layout_weight="1"
                 android:background="@null"
                 android:hint="@string/find_hint"
@@ -517,112 +647,109 @@
                 android:importantForAutofill="no"
                 android:inputType="text"
                 android:maxLines="1"
-                android:textColor="?attr/colorOnSurface"
-                android:textColorHint="?attr/colorOnSurfaceVariant"
-                android:textSize="15sp" />
+                android:textColor="@color/xc_on_surface"
+                android:textColorHint="@color/xc_faint" />
 
             <TextView
                 android:id="@+id/findCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="13sp" />
+                android:paddingStart="@dimen/space_2"
+                android:paddingEnd="@dimen/space_2"
+                android:textAppearance="@style/TextAppearance.Xc.Caption" />
 
             <ImageButton
                 android:id="@+id/findPrev"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                style="@style/Widget.Xc.IconButton"
                 android:contentDescription="@string/find_previous"
-                android:src="@drawable/ic_arrow_up" />
+                android:src="@drawable/ic_arrow_up"
+                app:tint="@color/xc_on_surface" />
 
             <ImageButton
                 android:id="@+id/findNext"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                style="@style/Widget.Xc.IconButton"
                 android:contentDescription="@string/find_next"
-                android:src="@drawable/ic_arrow_down" />
+                android:src="@drawable/ic_arrow_down"
+                app:tint="@color/xc_on_surface" />
 
             <ImageButton
                 android:id="@+id/findClose"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                style="@style/Widget.Xc.IconButton"
                 android:contentDescription="@string/close"
-                android:src="@drawable/ic_close" />
+                android:src="@drawable/ic_close"
+                app:tint="@color/xc_on_surface" />
         </LinearLayout>
 
-        <!-- Browser controls (shown while a page is open) -->
+        <!-- Page controls -->
         <LinearLayout
             android:id="@+id/navBar"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:background="@color/xc_surface"
             android:orientation="horizontal"
             android:visibility="gone">
 
             <ImageButton
                 android:id="@+id/backButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                style="@style/Widget.Xc.NavButton"
                 android:contentDescription="@string/back"
                 android:src="@drawable/ic_back" />
 
             <ImageButton
                 android:id="@+id/forwardButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                style="@style/Widget.Xc.NavButton"
                 android:contentDescription="@string/forward"
                 android:src="@drawable/ic_forward" />
 
             <ImageButton
                 android:id="@+id/reloadButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                style="@style/Widget.Xc.NavButton"
                 android:contentDescription="@string/reload"
                 android:src="@drawable/ic_refresh" />
 
             <ImageButton
                 android:id="@+id/homeButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                style="@style/Widget.Xc.NavButton"
                 android:contentDescription="@string/home"
                 android:src="@drawable/ic_home" />
 
             <ImageButton
                 android:id="@+id/shareButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                style="@style/Widget.Xc.NavButton"
                 android:contentDescription="@string/share"
                 android:src="@drawable/ic_share" />
 
             <ImageButton
                 android:id="@+id/bookmarkButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                style="@style/Widget.Xc.NavButton"
                 android:contentDescription="@string/bookmark_page"
                 android:src="@drawable/ic_star_border" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/xc_outline_soft" />
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNav"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/xc_surface"
+            app:itemActiveIndicatorStyle="@style/Widget.Xc.BottomNav.Indicator"
+            app:itemIconTint="@color/nav_item"
+            app:itemTextAppearanceActive="@style/TextAppearance.Xc.Chip"
+            app:itemTextAppearanceInactive="@style/TextAppearance.Xc.Chip"
+            app:itemTextColor="@color/nav_item"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/bottom_nav" />
+
+        <!-- Fills the system navigation-bar area so the bottom bar looks continuous -->
+        <View
+            android:id="@+id/bottomInsetSpacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@color/xc_surface" />
     </LinearLayout>
 
     <FrameLayout

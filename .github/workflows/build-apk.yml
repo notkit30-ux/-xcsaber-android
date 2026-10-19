@@ -43,7 +43,16 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;34.0.0" > /dev/null || true
 
       - name: Run unit tests
-        run: gradle --no-daemon --stacktrace testDebugUnitTest
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace testDebugUnitTest 2>&1 | tee build-log.txt || {
+            # Surface the first compiler/resource errors as readable annotations.
+            grep -E "^e: |error:|FAILED|Unresolved|AAPT" build-log.txt | head -30 | while read -r line; do
+              echo "::error::${line:0:400}"
+            done
+            exit 1
+          }
 
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace assembleDebug

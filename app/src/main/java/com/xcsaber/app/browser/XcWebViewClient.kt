@@ -10,8 +10,10 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.xcsaber.app.data.Prefs
+import com.xcsaber.app.privacy.BlockStats
 import com.xcsaber.app.privacy.TrackerBlocker
 import com.xcsaber.app.search.UrlUtils
+import com.xcsaber.app.userscripts.UserScriptParser
 import java.io.ByteArrayInputStream
 
 /**
@@ -23,7 +25,8 @@ class XcWebViewClient(
     private val tab: Tab,
     private val host: BrowserHost,
     private val prefs: Prefs,
-    private val blocker: TrackerBlocker
+    private val blocker: TrackerBlocker,
+    private val stats: BlockStats
 ) : WebViewClient() {
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -31,7 +34,10 @@ class XcWebViewClient(
         if (url == "about:blank") return false
         return when (UrlUtils.classifyScheme(url)) {
             UrlUtils.Kind.WEB_URL -> {
-                if (prefs.httpsOnly && url.startsWith("http://", ignoreCase = true)) {
+                if (request.isForMainFrame && UserScriptParser.looksLikeUserScriptUrl(url)) {
+                    host.offerUserScript(url)
+                    true
+                } else if (prefs.effectiveHttpsOnly && url.startsWith("http://", ignoreCase = true)) {
                     view.loadUrl(UrlUtils.upgradeToHttps(url))
                     true
                 } else {
@@ -56,6 +62,7 @@ class XcWebViewClient(
         // Runs on a background thread: only touch thread-safe state here.
         if (blocker.shouldBlock(request.url.host, UrlUtils.hostOf(tab.url))) {
             tab.blockedCount.incrementAndGet()
+            stats.record(tab.isPrivate)
             return WebResourceResponse(
                 "text/plain", "UTF-8", 403, "Blocked by XCSABER",
                 emptyMap(), ByteArrayInputStream(ByteArray(0))
@@ -79,6 +86,10 @@ class XcWebViewClient(
         host.onPageFinished(tab, url)
     }
 
+    override fun onPageCommitVisible(view: WebView, url: String) {
+        host.onPageCommitVisible(tab, url)
+    }
+
     override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
         tab.url = url
         host.onUrlChanged(tab, url)
@@ -88,6 +99,13 @@ class XcWebViewClient(
         if (!request.isForMainFrame) return
         val url = request.url.toString()
         val offline = !host.isOnline()
+        val kind = when {
+            offline -> ErrorKind.OFFLINE
+            error.errorCode == WebViewClient.ERROR_HOST_LOOKUP -> ErrorKind.NOT_FOUND
+            error.errorCode == WebViewClient.ERROR_CONNECT || error.errorCode == WebViewClient.ERROR_TIMEOUT -> ErrorKind.UNREACHABLE
+            error.errorCode == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> ErrorKind.SECURITY
+            else -> ErrorKind.OTHER
+        }
         val (title, message) = when {
             offline -> "You're offline" to
                 "Your device isn't connected to the internet. Check Wi-Fi or mobile data, then try again."
@@ -102,7 +120,7 @@ class XcWebViewClient(
             else -> "Page couldn't load" to "Something went wrong (${error.description})."
         }
         tab.loading = false
-        tab.error = PageError(title, message, url)
+        tab.error = PageError(title, message, url, kind)
         host.onError(tab, tab.error!!)
     }
 
@@ -123,7 +141,8 @@ class XcWebViewClient(
             "Your connection isn't private",
             "XCSABER blocked ${UrlUtils.displayHost(failing)} because $reason. " +
                 "Attackers might be trying to steal your information. There is no option to continue anyway.",
-            failing
+            failing,
+            ErrorKind.SECURITY
         )
         host.onError(tab, tab.error!!)
     }

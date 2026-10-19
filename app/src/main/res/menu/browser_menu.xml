@@ -1,21 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The overflow sheet is generated from this menu, so groups become divided sections. -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_new_tab" android:title="@string/menu_new_tab" />
-    <item android:id="@+id/menu_new_private_tab" android:title="@string/menu_new_private_tab" />
-    <item android:id="@+id/menu_find" android:title="@string/menu_find" />
-    <item
-        android:id="@+id/menu_desktop"
-        android:checkable="true"
-        android:title="@string/menu_desktop" />
-    <item android:id="@+id/menu_share" android:title="@string/menu_share" />
-    <item android:id="@+id/menu_add_shortcut" android:title="@string/menu_add_shortcut" />
-    <item android:id="@+id/menu_directions" android:title="@string/menu_directions" />
-    <item android:id="@+id/menu_open_maps" android:title="@string/menu_open_maps" />
-    <item android:id="@+id/menu_bookmarks" android:title="@string/bookmarks" />
-    <item android:id="@+id/menu_history" android:title="@string/history" />
-    <item android:id="@+id/menu_downloads" android:title="@string/downloads" />
-    <item android:id="@+id/menu_close_tab" android:title="@string/menu_close_tab" />
-    <item
-        android:id="@+id/menu_ad_blocker"
-    android:title="Ad blocker &amp; privacy" />
+    <group android:id="@+id/group_tabs">
+        <item android:id="@+id/menu_new_tab" android:icon="@drawable/ic_add" android:title="@string/menu_new_tab" />
+        <item android:id="@+id/menu_new_private_tab" android:icon="@drawable/ic_private" android:title="@string/menu_new_private_tab" />
+    </group>
+    <group android:id="@+id/group_page">
+        <item android:id="@+id/menu_find" android:icon="@drawable/ic_search" android:title="@string/menu_find" />
+        <item
+            android:id="@+id/menu_desktop"
+            android:checkable="true"
+            android:icon="@drawable/ic_desktop"
+            android:title="@string/menu_desktop" />
+        <item android:id="@+id/menu_share" android:icon="@drawable/ic_share" android:title="@string/menu_share" />
+        <item android:id="@+id/menu_add_shortcut" android:icon="@drawable/ic_pin" android:title="@string/menu_add_shortcut" />
+        <item android:id="@+id/menu_directions" android:icon="@drawable/ic_directions" android:title="@string/menu_directions" />
+        <item android:id="@+id/menu_open_maps" android:icon="@drawable/ic_external" android:title="@string/menu_open_maps" />
+    </group>
+    <group android:id="@+id/group_library">
+        <item android:id="@+id/menu_bookmarks" android:icon="@drawable/ic_star" android:title="@string/bookmarks" />
+        <item android:id="@+id/menu_history" android:icon="@drawable/ic_history" android:title="@string/history" />
+        <item android:id="@+id/menu_downloads" android:icon="@drawable/ic_download" android:title="@string/downloads" />
+    </group>
+    <group android:id="@+id/group_tools">
+        <item android:id="@+id/menu_ad_blocker" android:icon="@drawable/ic_shield" android:title="Ad blocker &amp; privacy" />
+        <item android:id="@+id/menu_extensions" android:icon="@drawable/ic_extension" android:title="@string/menu_extensions" />
+        <item android:id="@+id/menu_settings" android:icon="@drawable/ic_settings" android:title="@string/menu_settings" />
+    </group>
+    <group android:id="@+id/group_end">
+        <item android:id="@+id/menu_close_tab" android:icon="@drawable/ic_close" android:title="@string/menu_close_tab" />
+    </group>
 </menu>

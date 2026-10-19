@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/space_3">
+
+        <View
+            android:layout_width="36dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/space_2"
+            android:background="@drawable/bg_sheet_handle" />
+
+        <TextView
+            android:id="@+id/choiceTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/space_5"
+            android:paddingTop="@dimen/space_3"
+            android:paddingEnd="@dimen/space_5"
+            android:textAppearance="@style/TextAppearance.Xc.Headline" />
+
+        <TextView
+            android:id="@+id/choiceNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/space_5"
+            android:paddingEnd="@dimen/space_5"
+            android:paddingBottom="@dimen/space_2"
+            android:textAppearance="@style/TextAppearance.Xc.BodySmall"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/choiceContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

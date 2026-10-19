@@ -1,19 +1,21 @@
 package com.xcsaber.app.ui
 
 import android.app.Activity
+import android.app.Dialog
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.xcsaber.app.R
 
-/** One reusable dialog for bookmarks, history, downloads and website permissions. */
+/** One reusable bottom sheet for bookmarks, history, downloads and website permissions. */
 object ListDialog {
 
     fun show(
@@ -21,19 +23,23 @@ object ListDialog {
         title: String,
         emptyText: String,
         supplier: () -> List<Row>,
-        onClick: (Row, AlertDialog) -> Unit,
+        onClick: (Row, Dialog) -> Unit,
         onRemove: ((Row) -> Unit)? = null,
         onClearAll: (() -> Unit)? = null,
         filterable: Boolean = false
     ) {
-        val view = LayoutInflater.from(activity).inflate(R.layout.dialog_list, null)
+        val view = LayoutInflater.from(activity).inflate(R.layout.sheet_list, null)
+        view.findViewById<TextView>(R.id.sheetTitle).text = title
         val filter: EditText = view.findViewById(R.id.listFilter)
-        val empty: TextView = view.findViewById(R.id.listEmpty)
-        val recycler: RecyclerView = view.findViewById(R.id.listRecycler)
-        empty.text = emptyText
+        val empty: View = view.findViewById(R.id.listEmptyState)
+        empty.findViewById<TextView>(R.id.emptyTitle).text = title
+        empty.findViewById<TextView>(R.id.emptyMessage).text = emptyText
+        empty.findViewById<ImageView>(R.id.emptyIcon).setImageResource(R.drawable.ic_list)
+        val recycler: MaxHeightRecyclerView = view.findViewById(R.id.listRecycler)
+        val clearAll: MaterialButton = view.findViewById(R.id.sheetClearAll)
         filter.visibility = if (filterable) View.VISIBLE else View.GONE
 
-        var dialog: AlertDialog? = null
+        var dialog: BottomSheetDialog? = null
         lateinit var adapter: RowAdapter
 
         fun refresh() {
@@ -45,6 +51,7 @@ object ListDialog {
             adapter.submit(shown)
             empty.visibility = if (shown.isEmpty()) View.VISIBLE else View.GONE
             recycler.visibility = if (shown.isEmpty()) View.GONE else View.VISIBLE
+            clearAll.visibility = if (onClearAll != null && all.isNotEmpty()) View.VISIBLE else View.GONE
         }
 
         adapter = RowAdapter(
@@ -58,22 +65,18 @@ object ListDialog {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) = refresh()
         })
-        refresh()
-
-        val builder = MaterialAlertDialogBuilder(activity)
-            .setTitle(title)
-            .setView(view)
-            .setPositiveButton(R.string.close, null)
-        if (onClearAll != null) {
-            builder.setNeutralButton(R.string.clear_all) { _, _ ->
-                MaterialAlertDialogBuilder(activity)
-                    .setTitle(title)
-                    .setMessage("Clear everything in this list?")
-                    .setPositiveButton("Clear") { _, _ -> onClearAll() }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
-            }
+        clearAll.setOnClickListener {
+            MaterialAlertDialogBuilder(activity)
+                .setTitle(title)
+                .setMessage("Clear everything in this list?")
+                .setPositiveButton("Clear") { _, _ ->
+                    onClearAll?.invoke()
+                    refresh()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
         }
-        dialog = builder.show()
+        refresh()
+        dialog = Sheets.show(activity, view)
     }
 }

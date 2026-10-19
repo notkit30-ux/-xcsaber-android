@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="64dp"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/space_5"
+    android:paddingTop="@dimen/space_2"
+    android:paddingEnd="@dimen/space_4"
+    android:paddingBottom="@dimen/space_2">
+
+    <ImageView
+        android:id="@+id/settingIcon"
+        android:layout_width="@dimen/tile_s"
+        android:layout_height="@dimen/tile_s"
+        android:background="@drawable/bg_tile_violet"
+        android:contentDescription="@null"
+        android:padding="9dp"
+        app:tint="@color/xc_violet" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_3"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/settingTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Xc.Body" />
+
+        <TextView
+            android:id="@+id/settingSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textAppearance="@style/TextAppearance.Xc.Caption" />
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="@dimen/space_2"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="@color/xc_faint" />
+</LinearLayout>

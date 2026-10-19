@@ -1,16 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- XCSABER design tokens, LIGHT. values-night/colors.xml holds the same names for DARK.
+     Always reference these tokens; never hard-code a hex value in a layout or style. -->
 <resources>
-    <color name="xc_blue">#1F6FEB</color>
-    <color name="xc_blue_dark">#1558BF</color>
-    <color name="xc_blue_light">#D6E4FF</color>
-    <color name="xc_cyan">#38BDF8</color>
+    <!-- Brand accents -->
+    <color name="xc_blue">#2F6BFF</color>
+    <color name="xc_blue_dark">#2457D6</color>
+    <color name="xc_blue_light">#DCE6FF</color>
+    <color name="xc_cyan">#0A9CC4</color>
+    <color name="xc_violet">#6A4BEF</color>
+    <color name="xc_on_accent">#FFFFFF</color>
+
+    <!-- Surfaces (lowest to highest) -->
+    <color name="xc_bg">#F4F6FB</color>
     <color name="xc_surface">#FFFFFF</color>
-    <color name="xc_on_surface">#1C1E21</color>
-    <color name="xc_surface_variant">#F1F3F6</color>
-    <color name="xc_outline">#D0D5DD</color>
-    <color name="xc_muted">#5F6672</color>
-    <color name="xc_private_bar">#2B2D42</color>
-    <color name="xc_error">#C62828</color>
-    <color name="xc_ok">#1E8E3E</color>
-    <color name="ic_launcher_background">#1F6FEB</color>
+    <color name="xc_surface_raised">#FFFFFF</color>
+    <color name="xc_surface_variant">#EEF2F9</color>
+    <color name="xc_surface_high">#E6ECF7</color>
+    <color name="xc_outline">#D4DCEB</color>
+    <color name="xc_outline_soft">#E3E9F4</color>
+
+    <!-- Text -->
+    <color name="xc_on_surface">#0C1220</color>
+    <color name="xc_muted">#50607A</color>
+    <color name="xc_faint">#6B7890</color>
+
+    <!-- Status -->
+    <color name="xc_ok">#148A5B</color>
+    <color name="xc_warn">#B7791F</color>
+    <color name="xc_error">#D6334A</color>
+
+    <!-- Translucent tints for icon tiles, chips and tonal buttons -->
+    <color name="xc_blue_tint">#142F6BFF</color>
+    <color name="xc_cyan_tint">#140A9CC4</color>
+    <color name="xc_violet_tint">#146A4BEF</color>
+    <color name="xc_ok_tint">#14148A5B</color>
+    <color name="xc_warn_tint">#14B7791F</color>
+    <color name="xc_error_tint">#14D6334A</color>
+
+    <!-- Special surfaces -->
+    <color name="xc_hero_start">#E3EBFF</color>
+    <color name="xc_hero_end">#EAE5FF</color>
+    <color name="xc_glow">#332F6BFF</color>
+    <color name="xc_scrim">#66000000</color>
+    <color name="xc_private_bar">#2B2640</color>
+    <color name="xc_on_private">#F2F0FF</color>
+
+    <!-- Launcher and splash (same in both themes) -->
+    <color name="ic_launcher_background">#2F5BFF</color>
+    <color name="xc_splash_bg">#0A0D14</color>
 </resources>

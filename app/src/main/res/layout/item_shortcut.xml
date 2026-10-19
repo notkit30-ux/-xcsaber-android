@@ -5,22 +5,22 @@
     android:background="?attr/selectableItemBackground"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="@dimen/space_2"
+    android:paddingBottom="@dimen/space_2">
 
     <FrameLayout
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:background="@drawable/bg_circle">
+        android:layout_width="@dimen/tile_l"
+        android:layout_height="@dimen/tile_l"
+        android:background="@drawable/bg_card">
 
         <TextView
             android:id="@+id/shortcutInitial"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:textColor="?attr/colorPrimary"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:textColor="@color/xc_blue"
+            android:textSize="20sp"
+            android:fontFamily="sans-serif-medium" />
     </FrameLayout>
 
     <TextView
@@ -33,6 +33,5 @@
         android:maxLines="1"
         android:paddingStart="2dp"
         android:paddingEnd="2dp"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="12sp" />
+        android:textAppearance="@style/TextAppearance.Xc.Caption" />
 </LinearLayout>

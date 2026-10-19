@@ -1,0 +1,51 @@
+package com.xcsaber.app.plugins
+
+import com.xcsaber.app.R
+
+/** Every script add-on that ships with this version. Each id has a file in assets/addons/<id>.js. */
+object AddonCatalog {
+    val all: List<ScriptAddon> = listOf(
+        ScriptAddon("dark", "Dark Pages",
+            "Turns bright websites dark and keeps photos and video looking normal. Pages that are already dark are left alone.",
+            PluginCategory.READING, R.drawable.ic_moon, PluginAccent.VIOLET),
+        ScriptAddon("warm", "Night Shift",
+            "Adds a warm, low-blue tint over every page to be easier on your eyes at night.",
+            PluginCategory.READING, R.drawable.ic_sun, PluginAccent.WARN),
+        ScriptAddon("reader", "Reading Mode",
+            "On article pages, hides menus and side panels and sets text in a comfortable reading column.",
+            PluginCategory.READING, R.drawable.ic_list, PluginAccent.CYAN),
+        ScriptAddon("zoom", "Force Zoom",
+            "Lets you pinch-zoom on pages that try to lock zooming.",
+            PluginCategory.READING, R.drawable.ic_plus_circle, PluginAccent.BLUE),
+        ScriptAddon("selection", "Unlock Selection",
+            "Lets you select and copy text on pages that block it.",
+            PluginCategory.READING, R.drawable.ic_copy, PluginAccent.OK),
+        ScriptAddon("cookies", "Cookie Banner Hider",
+            "Hides common cookie consent pop-ups. It only hides them; it does not answer them for you.",
+            PluginCategory.CLEANUP, R.drawable.ic_cookie, PluginAccent.WARN),
+        ScriptAddon("popups", "Pop-up Remover",
+            "Hides full-screen newsletter, app-install and notification prompts. Login dialogs are left alone.",
+            PluginCategory.CLEANUP, R.drawable.ic_ban, PluginAccent.BLUE),
+        ScriptAddon("autoplay", "Stop Autoplay",
+            "Pauses videos that start playing by themselves. Videos you tap still play.",
+            PluginCategory.CLEANUP, R.drawable.ic_activity, PluginAccent.VIOLET),
+        ScriptAddon("unstick", "Sticky Header Remover",
+            "Lets top bars scroll away instead of covering the page. Experimental: a few sites may look off.",
+            PluginCategory.CLEANUP, R.drawable.ic_pin, PluginAccent.CYAN),
+        ScriptAddon("yt", "Distraction-free YouTube",
+            "Hides Shorts shelves on YouTube. Best effort, because YouTube changes its page often.",
+            PluginCategory.CLEANUP, R.drawable.ic_globe, PluginAccent.BLUE, matches = listOf("youtube.com")),
+        ScriptAddon("tracking", "Clean Links",
+            "Removes tracking tags such as utm_ and fbclid from page addresses and from links you tap.",
+            PluginCategory.PRIVACY, R.drawable.ic_shield, PluginAccent.OK),
+        ScriptAddon("sametab", "Same-tab Links",
+            "Opens links that would launch a new tab in the tab you are already using.",
+            PluginCategory.PAGE, R.drawable.ic_external, PluginAccent.CYAN),
+        ScriptAddon("pwreveal", "Password Peek",
+            "Double-tap a password box to see what you typed. It hides again when you leave the box.",
+            PluginCategory.PAGE, R.drawable.ic_eye, PluginAccent.VIOLET),
+        ScriptAddon("totop", "Back-to-top Button",
+            "Shows a small button for jumping to the top after you scroll down a long page.",
+            PluginCategory.PAGE, R.drawable.ic_arrow_up, PluginAccent.BLUE),
+    )
+}

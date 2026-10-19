@@ -5,8 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="6dp"
-    app:cardCornerRadius="16dp"
+    app:cardBackgroundColor="@color/xc_surface_raised"
+    app:cardCornerRadius="@dimen/radius_l"
     app:cardElevation="0dp"
+    app:strokeColor="@color/xc_outline_soft"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -19,15 +21,17 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="10dp">
+            android:paddingStart="@dimen/space_3">
 
             <ImageView
-                android:id="@+id/tabPrivateIcon"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="6dp"
+                android:id="@+id/tabFavicon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="@dimen/space_2"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_private" />
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_globe"
+                app:tint="@color/xc_muted" />
 
             <TextView
                 android:id="@+id/tabTitle"
@@ -36,26 +40,42 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:textAppearance="@style/TextAppearance.Xc.Body"
+                android:textSize="13sp" />
 
             <ImageButton
                 android:id="@+id/tabClose"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="@dimen/touch_min"
+                android:layout_height="@dimen/touch_min"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_close_tab"
-                android:src="@drawable/ic_close" />
+                android:padding="15dp"
+                android:src="@drawable/ic_close"
+                app:tint="@color/xc_muted" />
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/tabThumb"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:background="?attr/colorSurfaceVariant"
-            android:contentDescription="@null"
-            android:scaleType="centerCrop" />
+            android:layout_height="132dp"
+            android:background="@color/xc_surface_variant">
+
+            <ImageView
+                android:id="@+id/tabThumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop" />
+
+            <ImageView
+                android:id="@+id/tabPrivateIcon"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_private"
+                android:visibility="gone"
+                app:tint="@color/xc_violet" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tabHost"
@@ -63,8 +83,8 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:padding="8dp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp" />
+            android:padding="@dimen/space_2"
+            android:paddingStart="@dimen/space_3"
+            android:textAppearance="@style/TextAppearance.Xc.Caption" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

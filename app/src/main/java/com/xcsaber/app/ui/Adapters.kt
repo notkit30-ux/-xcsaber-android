@@ -6,10 +6,12 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.content.res.ColorStateList
 import androidx.annotation.DrawableRes
+import androidx.core.widget.ImageViewCompat
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.color.MaterialColors
 import com.xcsaber.app.R
 import com.xcsaber.app.browser.Tab
 import com.xcsaber.app.data.Shortcut
@@ -100,7 +102,7 @@ class ShortcutAdapter(
     }
 }
 
-/** Tab switcher cards with a page preview. */
+/** Tab switcher cards: favicon, title, preview and a close button. */
 class TabsAdapter(
     private val onOpen: (Tab) -> Unit,
     private val onClose: (Tab) -> Unit
@@ -110,9 +112,20 @@ class TabsAdapter(
     private var currentId: Long = -1L
 
     fun submit(list: List<Tab>, current: Long) {
-        items = list.toList()
+        val old = items
+        val oldCurrent = currentId
+        val new = list.toList()
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = old.size
+            override fun getNewListSize() = new.size
+            override fun areItemsTheSame(a: Int, b: Int) = old[a].id == new[b].id
+            // Tabs are mutable, so always rebind rows that might have changed.
+            override fun areContentsTheSame(a: Int, b: Int) = false
+        })
+        items = new
         currentId = current
-        notifyDataSetChanged()
+        diff.dispatchUpdatesTo(this)
+        if (oldCurrent != current) notifyItemRangeChanged(0, new.size)
     }
 
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
@@ -120,6 +133,7 @@ class TabsAdapter(
         val title: TextView = view.findViewById(R.id.tabTitle)
         val host: TextView = view.findViewById(R.id.tabHost)
         val thumb: ImageView = view.findViewById(R.id.tabThumb)
+        val favicon: ImageView = view.findViewById(R.id.tabFavicon)
         val privateIcon: ImageView = view.findViewById(R.id.tabPrivateIcon)
         val close: ImageButton = view.findViewById(R.id.tabClose)
     }
@@ -133,26 +147,31 @@ class TabsAdapter(
         val tab = items[position]
         val ctx = holder.itemView.context
         val selected = tab.id == currentId
-        val onSurface = MaterialColors.getColor(holder.card, com.google.android.material.R.attr.colorOnSurface)
-        val primary = MaterialColors.getColor(holder.card, com.google.android.material.R.attr.colorPrimary)
-        val outline = MaterialColors.getColor(holder.card, com.google.android.material.R.attr.colorOutline)
-        val surface = MaterialColors.getColor(holder.card, com.google.android.material.R.attr.colorSurface)
-        val privateBg = ctx.getColor(R.color.xc_private_bar)
-
-        holder.card.setCardBackgroundColor(if (tab.isPrivate) privateBg else surface)
-        holder.card.strokeColor = if (selected) primary else outline
-        holder.card.strokeWidth = (if (selected) 3 else 1) * ctx.resources.displayMetrics.density.toInt().coerceAtLeast(1)
-        holder.title.setTextColor(if (tab.isPrivate) 0xFFFFFFFF.toInt() else onSurface)
-        holder.host.setTextColor(if (tab.isPrivate) 0xFFCCCCCC.toInt() else onSurface)
+        holder.card.setCardBackgroundColor(ctx.getColor(if (tab.isPrivate) R.color.xc_private_bar else R.color.xc_surface_raised))
+        holder.card.strokeColor = ctx.getColor(if (selected) R.color.xc_blue else R.color.xc_outline_soft)
+        holder.card.strokeWidth = ((if (selected) 2 else 1) * ctx.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+        val textColor = ctx.getColor(if (tab.isPrivate) R.color.xc_on_private else R.color.xc_on_surface)
+        holder.title.setTextColor(textColor)
         holder.title.text = if (tab.isBlank) "New tab" else tab.displayTitle()
         holder.host.text = when {
             tab.isPrivate -> "Private tab" + if (tab.isBlank) "" else " · " + UrlUtils.displayHost(tab.url)
             tab.isBlank -> "XCSABER home"
             else -> UrlUtils.displayHost(tab.url)
         }
+        holder.host.setTextColor(ctx.getColor(if (tab.isPrivate) R.color.xc_on_private else R.color.xc_muted))
         holder.privateIcon.visibility = if (tab.isPrivate) View.VISIBLE else View.GONE
-        holder.privateIcon.setColorFilter(0xFFFFFFFF.toInt())
-        holder.close.setColorFilter(if (tab.isPrivate) 0xFFFFFFFF.toInt() else onSurface)
+        // Favicons are kept in memory only and never for private tabs.
+        val fav = tab.favicon
+        if (fav != null && !tab.isPrivate) {
+            ImageViewCompat.setImageTintList(holder.favicon, null)
+            holder.favicon.setImageBitmap(fav)
+        } else {
+            holder.favicon.setImageResource(if (tab.isPrivate) R.drawable.ic_private else R.drawable.ic_globe)
+            ImageViewCompat.setImageTintList(
+                holder.favicon, ColorStateList.valueOf(ctx.getColor(if (tab.isPrivate) R.color.xc_violet else R.color.xc_muted))
+            )
+        }
+        ImageViewCompat.setImageTintList(holder.close, ColorStateList.valueOf(textColor))
         val thumb = tab.thumbnail
         if (thumb != null && !tab.isPrivate) holder.thumb.setImageBitmap(thumb) else holder.thumb.setImageDrawable(null)
         holder.card.setOnClickListener { onOpen(tab) }

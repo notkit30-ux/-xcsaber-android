@@ -10,6 +10,9 @@ import com.xcsaber.app.data.RecentSearchStore
 import com.xcsaber.app.data.SecureStore
 import com.xcsaber.app.data.ShortcutStore
 import com.xcsaber.app.downloads.DownloadStore
+import com.xcsaber.app.plugins.BuiltinPlugins
+import com.xcsaber.app.plugins.PluginRegistry
+import com.xcsaber.app.privacy.BlockStats
 import com.xcsaber.app.privacy.PrivacyManager
 import com.xcsaber.app.privacy.TrackerListManager
 
@@ -36,6 +39,14 @@ class XcApp : Application() {
         private set
     lateinit var privacy: PrivacyManager
         private set
+    lateinit var stats: BlockStats
+        private set
+    lateinit var plugins: PluginRegistry
+        private set
+    lateinit var addons: com.xcsaber.app.plugins.AddonRuntime
+        private set
+    lateinit var userScripts: com.xcsaber.app.userscripts.UserScriptStore
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -49,6 +60,17 @@ class XcApp : Application() {
         downloads = DownloadStore(secure)
         trackers = TrackerListManager(this, prefs)
         privacy = PrivacyManager(this, prefs, history, recents, bookmarks)
+        stats = BlockStats(prefs)
+        userScripts = com.xcsaber.app.userscripts.UserScriptStore(secure)
+        plugins = PluginRegistry(
+            BuiltinPlugins.create {
+                val nf = java.text.NumberFormat.getInstance()
+                nf.format(trackers.blocker.size) + " domains · " + nf.format(stats.sessionCount()) + " blocked this session"
+            } + com.xcsaber.app.plugins.UserScriptsPlugin(userScripts) +
+                com.xcsaber.app.plugins.AddonCatalog.all.map { com.xcsaber.app.plugins.ScriptAddonPlugin(it) },
+            debugBuild = BuildConfig.DEBUG
+        )
+        addons = com.xcsaber.app.plugins.AddonRuntime(assets, prefs)
         applyTheme(prefs.theme)
         // Loading the block list reads a file, so keep it off the main thread.
         Thread({ trackers.load() }, "xcsaber-trackers").start()
